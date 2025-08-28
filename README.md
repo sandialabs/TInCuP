@@ -208,7 +208,7 @@ Concise, actionable compiler errors for common CPO misuse (pointers, const-quali
 
 - Quick benefits: educational messages, zero runtime cost, bounded compile-time overhead
 - Controls: `TINCUP_DIAGNOSTIC_LEVEL` and category toggles
-- Full guide: see [docs/DIAGNOSTICS.md](docs/DIAGNOSTICS.md)
+- Full guide: see [Diagnostics](docs/DIAGNOSTICS.md)
 
 <details>
   <summary>Example diagnostic (pointer/smart pointer)</summary>
