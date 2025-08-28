@@ -1,6 +1,6 @@
 [project]
 name = "TInCuP"
-version = "1.0.0"
+version = "1.0.1"
 description = "Library for Python generation of C++ customization point objects with tag_invoke" 
 requires-python = ">=3.8"
 dependencies = [

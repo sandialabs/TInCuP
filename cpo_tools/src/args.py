@@ -130,4 +130,5 @@ $ cpo-generator '{"cpo_name": "execute_policy",
         action="store_true",
         help="Prepend #include <tincup/tincup.hpp> to the output.",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    return args, parser
