@@ -15,7 +15,8 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 BUILD_DIR="$SCRIPT_DIR/local_ci_build"
 COMPILERS=("gcc" "clang")
-PYTHON_VERSIONS=("python3")  # Local testing with system python
+# We'll auto-discover available Python versions (3.8–3.12) below
+PYTHON_VERSIONS=()
 
 # Helper functions
 log_section() {
@@ -72,13 +73,21 @@ check_prerequisites() {
         fi
     done
     
-    # Check Python
-    if ! command -v python3 &> /dev/null; then
-        missing_tools+=("python3")
-    else
-        local version
-        version=$(python3 --version)
-        log_success "Found Python: $version"
+    # Discover Python versions (prefer 3.8–3.12 if present)
+    local candidates=(python3.12 python3.11 python3.10 python3.9 python3.8 python3)
+    for py in "${candidates[@]}"; do
+        if command -v "$py" &> /dev/null; then
+            # Deduplicate
+            if [[ ! " ${PYTHON_VERSIONS[*]} " =~ " ${py} " ]]; then
+                PYTHON_VERSIONS+=("$py")
+                local version
+                version=$($py --version 2>&1)
+                log_success "Found $py: $version"
+            fi
+        fi
+    done
+    if [ ${#PYTHON_VERSIONS[@]} -eq 0 ]; then
+        missing_tools+=("python3 (>=3.8)")
     fi
     
     if [ ${#missing_tools[@]} -ne 0 ]; then
@@ -106,20 +115,31 @@ cleanup_build_dir() {
 # Python tests (mirrors python-tests job)
 run_python_tests() {
     log_section "Python Tests"
-    
-    # Install dependencies
-    log_info "Installing Python dependencies..."
-    python3 -m pip install --upgrade pip
-    pip install -e .
-    if [ -f "tests/requirements.txt" ]; then
-        pip install -r tests/requirements.txt
-    fi
-    
-    # Run Python tests
-    log_info "Running Python test suite..."
-    python3 tests/run_tests.py --verbose
-    
-    log_success "Python tests completed"
+
+    for py in "${PYTHON_VERSIONS[@]}"; do
+        log_info "Setting up virtualenv for $($py --version 2>&1)"
+        local venv_dir="$BUILD_DIR/venv_${py//./}"
+        "$py" -m venv "$venv_dir"
+        # shellcheck source=/dev/null
+        source "$venv_dir/bin/activate"
+        python -m pip install --upgrade pip >/dev/null
+        pip install -e . >/dev/null
+        if [ -f "tests/requirements.txt" ]; then
+            pip install -r tests/requirements.txt >/dev/null
+        fi
+
+        log_info "Running tests with $(python --version 2>&1)"
+        python tests/run_tests.py --verbose
+
+        # Also run the pattern verification wrapper similar to CI (non-fatal)
+        log_info "Running pattern verification scan (non-fatal)"
+        set +e
+        python -m cpo_tools.cpo_verification . --strict || true
+        set -e
+
+        deactivate
+        log_success "Python tests completed for $py"
+    done
 }
 
 # CMake tests for specific compiler
