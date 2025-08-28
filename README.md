@@ -23,6 +23,13 @@
 - Python tools: `pip install TInCuP==1.0.0` (installs the `cpo-generator` CLI)
 - From source (development): `pip install -e .`
 
+Troubleshooting CLI on macOS/Linux:
+- If `cpo-generator` is not found after install, ensure your user scripts directory is on `PATH`:
+  - `export PATH="$(python3 -m site --user-base)/bin:$PATH"`
+  - Add the line above to your shell profile (e.g., `~/.zshrc` or `~/.bashrc`).
+- Alternatively, use `pipx` to manage CLI tools: `pipx install TInCuP==1.0.0`
+- The module form always works: `python3 -m cpo_tools.cpo_generator --help`.
+
 ## Why Should I Care About Customization Points (and TInCuP?)
 
 Have you ever been in a situation like as a developer like the following?
