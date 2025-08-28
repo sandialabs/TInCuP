@@ -91,7 +91,7 @@ TInCuP bridges the gap between `tag_invoke`'s theoretical benefits and practical
 
 ## Static Dispatch Integration
 
-TInCuP includes compile-time dispatch utilities that turn runtime choices into template specializations — preserving performance while keeping a simple API. Full guide: `docs/STATIC_DISPATCH.md`.
+TInCuP includes compile-time dispatch utilities that turn runtime choices into template specializations — preserving performance while keeping a simple API. [Full guide](docs/STATIC_DISPATCH.md).
 
 - Zero-overhead after dispatch; unlocks compiler optimizations
 - Works with boolean and string dispatch patterns
@@ -208,7 +208,7 @@ Concise, actionable compiler errors for common CPO misuse (pointers, const-quali
 
 - Quick benefits: educational messages, zero runtime cost, bounded compile-time overhead
 - Controls: `TINCUP_DIAGNOSTIC_LEVEL` and category toggles
-- Full guide: see docs/DIAGNOSTICS.md
+- Full guide: see [docs/DIAGNOSTICS.md](docs/DIAGNOSTICS.md)
 
 <details>
   <summary>Example diagnostic (pointer/smart pointer)</summary>
@@ -245,17 +245,17 @@ This is a header-only library. To use it, simply include the main header:
 
 ## Quick Start
 
-**New to the project?** See `docs/GETTING_STARTED.md` for a complete guide.
+**New to the project?** See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for a complete guide.
 
 ## Documentation
 
-- Getting started: `docs/GETTING_STARTED.md`
-- Build systems: `docs/BUILD_SYSTEMS.md`
-- Static dispatch: `docs/STATIC_DISPATCH.md`
-- Diagnostics: `docs/DIAGNOSTICS.md`
-- MSVC tips: `docs/MSVC_GUIDE.md`
-- Local testing: `docs/LOCAL_TESTING.md`
-- Doxygen tags: `docs/DOXYGEN.md`
+- Getting started: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
+- Build systems: [docs/BUILD_SYSTEMS.md](docs/BUILD_SYSTEMS.md)
+- Static dispatch: [docs/STATIC_DISPATCH.md](docs/STATIC_DISPATCH.md)
+- Diagnostics: [docs/DIAGNOSTICS.md](docs/DIAGNOSTICS.md)
+- MSVC tips: [docs/MSVC_GUIDE.md](docs/MSVC_GUIDE.md)
+- Local testing: [docs/LOCAL_TESTING.md](docs/LOCAL_TESTING.md)
+- Doxygen tags: [docs/DOXYGEN.md](docs/DOXYGEN.md)
 
 ### Integration with Build Systems
 
@@ -269,10 +269,10 @@ FetchContent_MakeAvailable(tincup)
 target_link_libraries(your_target PRIVATE tincup::tincup)
 ```
 
-See `build_systems/cmake/README.md` for advanced usage and `docs/BUILD_SYSTEMS.md` for integration details.
+See [build_systems/cmake/README.md](build_systems/cmake/README.md) for advanced usage and [docs/BUILD_SYSTEMS.md](docs/BUILD_SYSTEMS.md) for integration details.
 
 #### Meson
-See `build_systems/meson/README.md` for detailed Meson integration.
+See [build_systems/meson/README.md](build_systems/meson/README.md) for detailed Meson integration.
 
 Quick example:
 ```meson
@@ -911,7 +911,7 @@ For detailed guidance on any integration, see the README in the respective direc
 ## Editor/IDE Integration
 
 ### VSCode
-See `docs/VSCODE_INTEGRATION.md` for tasks, snippets, and integration tips.
+See [docs/VSCODE_INTEGRATION.md](docs/VSCODE_INTEGRATION.md) for tasks, snippets, and integration tips.
 
 ### Vim
 The repository includes a complete Vim plugin. See `editor_integration/vim/README.md` for installation and usage.
