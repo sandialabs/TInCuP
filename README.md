@@ -30,6 +30,35 @@ Troubleshooting CLI on macOS/Linux:
 - Alternatively, use `pipx` to manage CLI tools: `pipx install TInCuP==1.0.0`
 - The module form always works: `python3 -m cpo_tools.cpo_generator --help`.
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Why Should I Care About Customization Points (and TInCuP?)](#why-should-i-care-about-customization-points-and-tincup)
+- [The Problem with Existing Approaches](#the-problem-with-existing-approaches)
+- [TInCuP's Solution](#tincups-solution)
+- [Static Dispatch Integration](#static-dispatch-integration)
+- [Enhanced Error Diagnostics](#enhanced-error-diagnostics)
+- [Features](#features)
+- [C++ Library Usage](#c-library-usage)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+  - [Integration with Build Systems](#integration-with-build-systems)
+  - [Code Generation Tool (cpo-generator)](#code-generation-tool-cpo-generator)
+- [All-Concrete CPO Design Guidance](#all-concrete-cpo-design-guidance)
+- [Limitations](#limitations)
+- [Third-Party Types](#third-party-types)
+- [Vim Plugin](#vim-plugin)
+- [Project Structure](#project-structure)
+- [Editor/IDE Integration](#editoride-integration)
+- [LLM Mode](#llm-mode)
+- [Composition](#composition)
+- [CPO Introspection](#cpo-introspection)
+- [Supported Compilers](#supported-compilers)
+- [Vim Installer (Optional)](#vim-installer-optional)
+- [Local Testing (Mirrors CI Exactly)](#local-testing-mirrors-ci-exactly)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Why Should I Care About Customization Points (and TInCuP?)
 
 Have you ever been in a situation like as a developer like the following?
@@ -62,14 +91,17 @@ TInCuP bridges the gap between `tag_invoke`'s theoretical benefits and practical
 
 ## Static Dispatch Integration
 
-TInCuP now includes **compile-time dispatch utilities** that enable zero-overhead runtime configuration. These utilities convert runtime decisions into compile-time template specializations, maintaining performance while providing flexible interfaces.
+TInCuP includes compile-time dispatch utilities that turn runtime choices into template specializations — preserving performance while keeping a simple API. Full guide: `docs/STATIC_DISPATCH.md`.
 
-### Boolean Dispatch
+- Zero-overhead after dispatch; unlocks compiler optimizations
+- Works with boolean and string dispatch patterns
 
-Generate CPOs that branch on runtime boolean values with compile-time optimization:
+<details>
+  <summary>Boolean Dispatch example</summary>
+
+Generate a CPO that branches on a runtime boolean with compile-time optimization:
 
 ```bash
-# Generate a CPO with boolean dispatch
 cpo-generator '{"cpo_name": "choose_path", 
                 "args": ["$T&: input"], 
                 "runtime_dispatch": {
@@ -78,7 +110,8 @@ cpo-generator '{"cpo_name": "choose_path",
                   "options": ["yin", "yang"]}}'
 ```
 
-**Generated CPO:**
+Generated CPO and usage:
+
 ```cpp
 inline constexpr struct choose_path_ftor final : tincup::cpo_base<choose_path_ftor> {
   TINCUP_CPO_TAG("choose_path")
@@ -86,7 +119,6 @@ inline constexpr struct choose_path_ftor final : tincup::cpo_base<choose_path_ft
   struct yin_tag {};
   struct yang_tag {};
 
-  // Runtime dispatch with compile-time optimization
   template<typename T>
   constexpr auto operator()(T& input, bool selector = false) const {
     tincup::BoolDispatch dispatcher(selector);
@@ -99,7 +131,6 @@ inline constexpr struct choose_path_ftor final : tincup::cpo_base<choose_path_ft
     });
   }
 
-  // Direct compile-time dispatch overloads also available
   template<typename T>
   constexpr auto operator()(T& input, yin_tag) const {
     return tag_invoke(*this, input, yin_tag{});
@@ -110,21 +141,20 @@ inline constexpr struct choose_path_ftor final : tincup::cpo_base<choose_path_ft
     return tag_invoke(*this, input, yang_tag{});
   }
 } choose_path;
-```
 
-**Usage:**
-```cpp
-// Both interfaces available for maximum flexibility
+// Both interfaces available
 auto result1 = choose_path(data, runtime_flag);    // Runtime -> compile-time
 auto result2 = choose_path(data, choose_path_ftor::yin_tag{});  // Direct compile-time
 ```
 
-### String Dispatch
+</details>
 
-Generate CPOs that dispatch on runtime string values with compile-time specialization:
+<details>
+  <summary>String Dispatch example</summary>
+
+Generate a CPO that dispatches on runtime string values with compile-time specialization:
 
 ```bash
-# Generate a CPO with string dispatch
 cpo-generator '{"cpo_name": "execute_policy", 
                 "args": ["$T&: data"], 
                 "runtime_dispatch": {
@@ -133,7 +163,8 @@ cpo-generator '{"cpo_name": "execute_policy",
                   "options": ["fast", "safe", "debug"]}}'
 ```
 
-**Generated CPO:**
+Generated CPO and usage:
+
 ```cpp
 inline constexpr struct execute_policy_ftor final : tincup::cpo_base<execute_policy_ftor> {
   TINCUP_CPO_TAG("execute_policy")
@@ -143,7 +174,6 @@ inline constexpr struct execute_policy_ftor final : tincup::cpo_base<execute_pol
   struct debug_tag {};
   struct not_found_tag {};  // For unrecognized strings
 
-  // Runtime dispatch with string lookup -> compile-time specialization  
   template<typename T>
   constexpr auto operator()(T& data, std::string_view policy_name) const {
     static constexpr std::array<std::string_view, 3> options = {
@@ -165,179 +195,35 @@ inline constexpr struct execute_policy_ftor final : tincup::cpo_base<execute_pol
   
   // Direct compile-time dispatch overloads also available...
 } execute_policy;
-```
 
-**Usage:**
-```cpp
 // Runtime string dispatches to compile-time specializations
-auto result = execute_policy(data, "fast");  // Zero runtime overhead after dispatch
+auto result = execute_policy(data, "fast");
 ```
 
-### Performance Benefits
-
-🚀 **Zero Runtime Overhead** - Runtime decisions become compile-time template instantiations  
-🚀 **Template Specialization** - Unlock compiler optimizations (loop unrolling, SIMD, constant folding)  
-🚀 **Code Generation** - Each dispatch path gets its own optimized implementation  
-🚀 **Type Safety** - Maintain compile-time type information through runtime choices  
-
-### When to Use Static Dispatch
-
-✅ **Performance-Critical Code** - Hot paths that benefit from compile-time specialization  
-✅ **Configuration-Based Algorithms** - Runtime settings that influence algorithmic choices  
-✅ **Hardware Abstraction** - Runtime hardware detection with compile-time optimization  
-✅ **Policy-Based Design** - Runtime policy selection with zero-overhead execution  
-
-❌ **Avoid for** - Large option sets (compilation overhead), frequently changing values, simple logic
+</details>
 
 ## Enhanced Error Diagnostics
 
-TInCuP addresses a major limitation identified in **P2279R0**: unhelpful compiler error messages when CPOs are used incorrectly. Our advanced diagnostic system detects common misuse patterns and provides clear, actionable guidance.
+Concise, actionable compiler errors for common CPO misuse (pointers, const-qualification, argument order/arity) with C++23/C++26 enhancements and opt-out controls for compile-time sensitive builds.
 
-### Diagnostic Categories
+- Quick benefits: educational messages, zero runtime cost, bounded compile-time overhead
+- Controls: `TINCUP_DIAGNOSTIC_LEVEL` and category toggles
+- Full guide: see docs/DIAGNOSTICS.md
 
-#### 🔍 **Pointer/Smart Pointer Misuse Detection**
-When you accidentally pass a pointer when a reference is expected:
+<details>
+  <summary>Example diagnostic (pointer/smart pointer)</summary>
 
 ```cpp
 std::unique_ptr<Vector> vec_ptr = std::make_unique<Vector>();
-add_assign(vec_ptr, other_vec);  // ❌ Passing smart pointer instead of object
+add_assign(vec_ptr, other_vec);  // ❌ pointer instead of object
 ```
 
-**Enhanced Error Message**:
+Message:
 ```
-CPO: No valid tag_invoke overload for these argument types, but there IS a valid 
-overload for the dereferenced arguments. Some arguments appear to be pointers/smart_ptrs 
-that may need explicit dereferencing. Consider: add_assign(*vec_ptr, other_vec)
+CPO: No valid tag_invoke overload, but a valid overload exists for dereferenced arguments.
+Consider: add_assign(*vec_ptr, other_vec)
 ```
-
-#### 🔒 **Const-Qualification Misuse Detection** 
-When you pass const objects to mutating operations:
-
-```cpp
-const Vector vec{1.0, 2.0};
-add_assign(vec, other_vec);  // ❌ Passing const object to mutating operation
-```
-
-**Enhanced Error Message**:
-```
-CPO: No valid tag_invoke overload for these argument types, but there IS a valid 
-overload for non-const arguments. You may be passing const objects to a mutating operation. 
-Consider: add_assign(non_const_vec, other_vec)
-```
-
-#### 🔄 **Combined Issue Detection**
-When multiple corrections are needed:
-
-```cpp
-const std::unique_ptr<Vector> vec_ptr = std::make_unique<Vector>();
-add_assign(vec_ptr, other_vec);  // ❌ Both const and pointer issues
-```
-
-**Enhanced Error Message**:
-```
-CPO: No valid tag_invoke overload for these argument types, but there IS a valid 
-overload for dereferenced non-const arguments. You may need both pointer dereferencing 
-and to remove const-qualification.
-```
-
-#### 🔀 **Argument Order Detection**
-When binary arguments are swapped:
-
-```cpp
-transform(source, target, func);  // ❌ Arguments in wrong order
-```
-
-**Enhanced Error Message**:
-```
-CPO: No valid tag_invoke overload for these argument types, but there IS a valid 
-overload with reordered arguments. You may have swapped argument positions. 
-Check the expected argument order for this CPO.
-```
-
-#### 🔢 **Wrong Argument Count Detection**
-When the number of arguments is incorrect:
-
-```cpp
-binary_op(single_arg);           // ❌ Missing second argument  
-binary_op(arg1, arg2, extra);    // ❌ Too many arguments
-```
-
-**Enhanced Error Message**:
-```
-CPO: No valid tag_invoke overload for this number of arguments, but there IS a valid 
-overload with different arity. You may be passing too many or too few arguments. 
-Check the expected number of arguments for this CPO.
-```
-
-### C++23/C++26 Enhanced Diagnostics
-
-When compiled with C++23, TInCuP provides even more sophisticated error analysis with detailed template instantiation context:
-
-```
-CPO [C++23]: No valid tag_invoke for current types, but valid for dereferenced types. 
-Problematic arguments need explicit dereferencing. Check template instantiation 
-context above for specific argument types.
-```
-
-**C++26 User-Generated Static Assert Messages**: When using GCC 14+ or Clang 19+ with `-std=c++2c`, TInCuP takes advantage of P2741R3 user-generated static_assert messages to show the actual CPO name in error messages:
-
-```cpp
-// C++26 enhanced error message shows the specific CPO name
-static assertion failed: example_cpo
-```
-
-This feature works seamlessly with TInCuP's StringLiteral-based CPO registry system, providing much clearer diagnostics by showing exactly which CPO failed rather than generic template error messages.
-
-### Performance Control for Compile-Time Conscious Users
-
-For performance-critical builds, TInCuP provides fine-grained control over diagnostic overhead:
-
-```cpp
-// Disable specific diagnostic categories
-#define TINCUP_DISABLE_POINTER_DIAGNOSTICS   // Skip pointer/smart_ptr checks
-#define TINCUP_DISABLE_CONST_DIAGNOSTICS     // Skip const-qualification checks  
-#define TINCUP_DISABLE_ORDER_DIAGNOSTICS     // Skip argument order checks
-#define TINCUP_DISABLE_ARITY_DIAGNOSTICS     // Skip argument count checks
-
-// Or disable all enhanced diagnostics at once
-#define TINCUP_DISABLE_ALL_DIAGNOSTICS       // Fastest compilation
-// or equivalently:
-#define TINCUP_MINIMAL_DIAGNOSTICS           // Alias for clarity
-
-// Or use single-knob diagnostic level control
-#define TINCUP_DIAGNOSTIC_LEVEL 0   // Disable all diagnostics (fastest)
-#define TINCUP_DIAGNOSTIC_LEVEL 1   // Keep pointer/const, disable order/arity
-#define TINCUP_DIAGNOSTIC_LEVEL 2   // Keep pointer/const/order, disable arity
-#define TINCUP_DIAGNOSTIC_LEVEL 3   // Enable all diagnostics (default)
-```
-
-**Compilation Impact**:
-- **Default**: 5 additional template checks per failed CPO call
-- **Minimal Mode**: Only basic diagnostics (fastest compilation)
-- **Selective**: Choose which categories matter most to your codebase
-
-### Technical Benefits
-
-✅ **Educational**: Messages teach correct usage patterns instead of cryptic template errors  
-✅ **Version-Aware**: C++23 users automatically get enhanced diagnostics  
-✅ **Zero Runtime Cost**: All diagnostics are compile-time only  
-✅ **Comprehensive Coverage**: Detects 5 major categories of CPO misuse  
-✅ **Performance Conscious**: Opt-out controls for compile-time sensitive builds  
-✅ **Bounded Cost**: Maximum 5 additional checks (not factorial explosion)  
-
----
-
-### References
-
-- [Customization Point Design in C++11 and Beyond](https://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/)
-- [Suggested Design for Customization Points](https://open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html)
-- [**P1665r0** Tag based customization points](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1665r0.pdf)
-- [**P1895R0** `tag_invoke`: A general pattern for supporting customisable functions](https://open-std.org/JTC1/SC22/WG21/docs/papers/2019/p1895r0.pdf)
-- [Why `tag_invoke` is not the solution I want | Barry's C++ Blog](https://brevzin.github.io/c++/2020/12/01/tag-invoke/)
-- [**P2279R0** We need a language mechanism for customization points](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2279r0.html) 
-- [**P2547R0** Language support for customisable functions](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2547r0.pdf)
-- [**P2855R1** Member customization points for Senders and Receivers](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2855r1.html)
-
+</details>
 
 ## Features
 
@@ -360,6 +246,16 @@ This is a header-only library. To use it, simply include the main header:
 ## Quick Start
 
 **New to the project?** See `docs/GETTING_STARTED.md` for a complete guide.
+
+## Documentation
+
+- Getting started: `docs/GETTING_STARTED.md`
+- Build systems: `docs/BUILD_SYSTEMS.md`
+- Static dispatch: `docs/STATIC_DISPATCH.md`
+- Diagnostics: `docs/DIAGNOSTICS.md`
+- MSVC tips: `docs/MSVC_GUIDE.md`
+- Local testing: `docs/LOCAL_TESTING.md`
+- Doxygen tags: `docs/DOXYGEN.md`
 
 ### Integration with Build Systems
 
