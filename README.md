@@ -1,4 +1,4 @@
-# TInCuP
+# TInCuP - Header-Only C++ Library for *T*ag *In*voke *Cu*stomization *P*oints
 
 <div align="center">
   <img src="tincup.png" alt="TInCuP Logo" width="200"/>
