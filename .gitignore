@@ -1,0 +1,16 @@
+# Vim temporary files
+*.swp
+*.swo
+
+# Build directories
+build
+
+# Python Bytecode
+*.pyc
+__pycache__
+
+# Python Distribution / Packaging
+dist/
+build/
+*.egg
+
