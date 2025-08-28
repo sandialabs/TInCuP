@@ -972,8 +972,11 @@ tincup/
 │   │   ├── cpp_cpo/           # CPO-specific functionality
 │   │   └── plugin/            # Vim plugin entry points
 │   └── vscode/                # VSCode tasks, snippets, configs
+├── examples                   # Demonstration of TInCuP in practice
+│   └── serialize
 ├── include/                   # Header-only library
-│   └── tincup/                # Main library header
+│   └── tincup/                # Main (only) library header
+├── scripts                    # Utilities for updating README examples and copyright banner
 └── tests/                     # Comprehensive test suite
 ```
 
