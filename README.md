@@ -5,6 +5,8 @@
 </div>
 
 [![CI](https://github.com/sandialabs/TInCuP/actions/workflows/ci.yml/badge.svg)](https://github.com/sandialabs/TInCuP/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/TInCuP.svg)](https://pypi.org/project/TInCuP/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/TInCuP.svg)](https://pypi.org/project/TInCuP/)
 [![CMake](https://img.shields.io/badge/CMake-supported-blue?logo=cmake)](#cmake)
 [![Meson](https://img.shields.io/badge/Meson-supported-brightgreen)](#meson)
 [![VS%20Code](https://img.shields.io/badge/VS%20Code-integration-007ACC?logo=visualstudiocode)](docs/VSCODE_INTEGRATION.md)
@@ -15,6 +17,11 @@
 [![MSVC](https://img.shields.io/badge/MSVC-C%2B%2B20-blue?logo=visualstudio)](#supported-compilers)
 
 **TInCuP** (Tag Invoked Customization Points) is a modern, header-only C++20 library that solves the **boilerplate problem** in `tag_invoke`-based customization points through comprehensive code generation and verification tools.
+
+## Installation
+
+- Python tools: `pip install TInCuP==1.0.0` (installs the `cpo-generator` CLI)
+- From source (development): `pip install -e .`
 
 ## Why Should I Care About Customization Points (and TInCuP?)
 
@@ -376,7 +383,13 @@ The Python-based code generator is the fastest way to create new CPOs.
 
 ### Installation
 
-Navigate to the root of this repository and install the tool using `pip`:
+Preferred (PyPI):
+
+```bash
+pip install TInCuP==1.0.0
+```
+
+For development (from source):
 
 ```bash
 pip install -e .
