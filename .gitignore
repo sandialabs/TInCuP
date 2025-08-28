@@ -14,4 +14,5 @@ __pycache__
 dist/
 build/
 *.egg-info
-cpo_tools.egg-info
+cpo_tools.egg-info/
+test_pypi_env/
