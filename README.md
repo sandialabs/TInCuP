@@ -22,7 +22,7 @@ Have you ever been in a situation like as a developer like the following?
 
 - You are developing `ImpressiveLib`, a very impressive library.
 - `ImpressiveLib` uses `AwesomeType`, which is define in `CoolLib`, an open source library that you *don't* own. 
-- You'd *really* really like to use `SpiffyLib`, another library you don't own to do something with `AwesomeType`.
+- You'd *really* like to use `SpiffyLib`, another library you don't own to do something with `AwesomeType`.
 - Unfortunately there is an interface incompatibility. It looks like you need to modify one of the two libraries.  
 - This is where customization points can help!
 

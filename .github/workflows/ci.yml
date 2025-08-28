@@ -262,8 +262,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install build tools
         run: |
+          set -e
           brew update
           brew install cmake meson ninja || true
+          if ! command -v meson >/dev/null 2>&1; then
+            python3 -m pip install --user --upgrade pip
+            python3 -m pip install --user meson ninja
+            USER_BASE=$(python3 -c 'import site,sys; sys.stdout.write(site.USER_BASE)')
+            echo "$USER_BASE/bin" >> "$GITHUB_PATH"
+          fi
       - name: Configure and build (CMake)
         run: cmake -S . -B build && cmake --build build
       - name: Smoke compile (CMake consumer)
@@ -361,7 +368,13 @@ jobs:
           #include <tincup/tincup.hpp>
           int main() { return 0; }
           EOF
-          ln -s "$GITHUB_WORKSPACE/build_systems/meson" build/meson_smoke/subprojects/tincup
+          # Copy subproject instead of symlink to avoid sandbox/symlink issues
+          rm -rf build/meson_smoke/subprojects/tincup
+          mkdir -p build/meson_smoke/subprojects/tincup
+          cp -r "$GITHUB_WORKSPACE/build_systems/meson/"* build/meson_smoke/subprojects/tincup/
+          # Replace symlinked include with a real directory
+          rm -rf build/meson_smoke/subprojects/tincup/include
+          cp -r "$GITHUB_WORKSPACE/include" build/meson_smoke/subprojects/tincup/include
           meson setup build/meson_smoke_build build/meson_smoke
           meson compile -C build/meson_smoke_build -v
 
