@@ -245,7 +245,7 @@ This is a header-only library. To use it, simply include the single header:
 
 ## Quick Start
 
-**New to the project?** See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for a complete guide.
+**New to the project?** See [docs/GETTING_STARTED.md](Getting started) for a complete guide.
 
 ## Documentation
 
