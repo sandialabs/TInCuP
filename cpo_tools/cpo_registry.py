@@ -22,7 +22,7 @@ import json
 import re
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 
 TAG_RE = re.compile(r"\b(TINCUP_CPO_TAG|CPO_TAG)\s*\(\s*\"([^\"]+)\"\s*\)")
@@ -34,7 +34,7 @@ class CPOEntry:
     name: str
     qualified: str
     header: str
-    struct: str | None
+    struct: Optional[str]
     line: int
 
 

@@ -9,12 +9,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 import shutil
 import subprocess
 import sys
 
 
-def wrap_output(code: str, ns: str | None, with_include: bool) -> str:
+def wrap_output(code: str, ns: Optional[str], with_include: bool) -> str:
     """Optionally wrap generated code with include, pragma once, and namespace."""
     lines = ["#pragma once"]
     if with_include:

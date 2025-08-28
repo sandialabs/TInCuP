@@ -13,5 +13,4 @@ __pycache__
 # Python Distribution / Packaging
 dist/
 build/
-*.egg
-
+*.egg-info
