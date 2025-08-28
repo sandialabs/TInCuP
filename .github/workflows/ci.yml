@@ -13,9 +13,6 @@ on:
       - '.vscode/settings.json'
       - 'editor_integration/vscode/.vscode/settings.json'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
   pull_request:
     branches: [ main ]
     paths-ignore:
@@ -27,6 +24,10 @@ concurrency:
       - 'tincup.png'
       - '.vscode/settings.json'
       - 'editor_integration/vscode/.vscode/settings.json'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   changes:
