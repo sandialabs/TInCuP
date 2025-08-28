@@ -16,7 +16,17 @@
 
 **TInCuP** (Tag Invoked Customization Points) is a modern, header-only C++20 library that solves the **boilerplate problem** in `tag_invoke`-based customization points through comprehensive code generation and verification tools.
 
-## The Problem
+## Why Should I Care About Customization Points (and TInCuP?)
+
+Have you ever been in a situation like as a developer like the following?
+
+- You are developing `ImpressiveLib`, a very impressive library.
+- `ImpressiveLib` uses `AwesomeType`, which is define in `CoolLib`, an open source library that you *don't* own. 
+- You'd *really* really like to use `SpiffyLib`, another library you don't own to do something with `AwesomeType`.
+- Unfortunately there is an interface incompatibility. It looks like you need to modify one of the two libraries.  
+- This is where customization points can help!
+
+## The Problem with Existing Approaches
 
 C++ customization mechanisms have fundamental limitations that the standardization committee has recognized in WG21 papers **P1895R0** and **P2279R0**:
 

@@ -299,7 +299,14 @@ jobs:
           #include <tincup/tincup.hpp>
           int main() { return 0; }
           EOF
-          ln -s "$GITHUB_WORKSPACE/build_systems/meson" build/meson_smoke/subprojects/tincup
+          # On MSYS2/Windows, symlinks can be unreliable; copy the subproject instead
+          rm -rf build/meson_smoke/subprojects/tincup
+          mkdir -p build/meson_smoke/subprojects/tincup
+          cp -r "$GITHUB_WORKSPACE/build_systems/meson/"* build/meson_smoke/subprojects/tincup/
+          # Ensure the 'include' directory exists within the subproject (avoid nested symlink)
+          if [ ! -d build/meson_smoke/subprojects/tincup/include ]; then
+            cp -r "$GITHUB_WORKSPACE/include" build/meson_smoke/subprojects/tincup/include
+          fi
           meson setup build/meson_smoke_build build/meson_smoke
           meson compile -C build/meson_smoke_build -v
 
