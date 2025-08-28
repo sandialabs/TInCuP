@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-# Real Vector Framework - Zero Overhead Abstractions for Vector Algorithms
-# 
-# Copyright (c) National Technology & Engineering Solutions of Sandia, 
-# LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. 
+# TInCuP - A library for generating and validating C++ customization point objects that use `tag_invoke`
+#
+# Copyright (c) National Technology & Engineering Solutions of Sandia,
+# LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
-# 
+#
 # Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 
 import os
@@ -14,32 +14,43 @@ import re
 from pathlib import Path
 from typing import List, Tuple, Optional
 
+# Default banner text embedded from BANNER.txt
+BANNER_TEXT = (
+    "TInCuP - A library for generating and validating C++ customization point objects that use `tag_invoke`\n\n"
+    "Copyright (c) National Technology & Engineering Solutions of Sandia, \n"
+    "LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. \n"
+    "Government retains certain rights in this software.\n\n"
+    "Questions? Contact Greg von Winckel (gvonwin@sandia.gov)\n"
+)
+
 class BannerChecker:
     """
-    This script recursively checks all C++ (.hpp, .cpp), Python (.py), 
-    CMakeLists.txt, and CMake (.cmake) files to ensure they contain 
-    the required copyright banner from BANNER.txt.
+    This script recursively checks all C++ (.hpp, .cpp), Python (.py),
+    CMakeLists.txt, and CMake (.cmake) files to ensure they contain
+    the required copyright banner.
     """
 
-    def __init__(self, banner_file: str = "BANNER.txt"):
+    def __init__(self, banner_file: Optional[str] = None, banner_text: Optional[str] = None):
         self.banner_file = banner_file
-        self.banner_text = self._load_banner()
+        self.banner_text = self._load_banner(banner_file, banner_text)
         self.cpp_extensions = {'.hpp', '.cpp'}
         self.python_extensions = {'.py'}
         self.cmake_files = {'CMakeLists.txt'}
         self.cmake_extensions = {'.cmake'}
         
-    def _load_banner(self) -> str:
-        """Load and return the banner text from BANNER.txt"""
-        try:
-            with open(self.banner_file, 'r', encoding='utf-8') as f:
-                return f.read().strip()
-        except FileNotFoundError:
-            print(f"Error: {self.banner_file} not found!")
-            sys.exit(1)
-        except Exception as e:
-            print(f"Error reading {self.banner_file}: {e}")
-            sys.exit(1)
+    def _load_banner(self, banner_file: Optional[str], banner_text: Optional[str]) -> str:
+        """Resolve banner text from explicit value, file, or built-in default."""
+        if banner_text:
+            return banner_text.strip()
+        if banner_file:
+            try:
+                with open(banner_file, 'r', encoding='utf-8') as f:
+                    return f.read().strip()
+            except FileNotFoundError:
+                print(f"Warning: {banner_file} not found. Falling back to embedded banner text.")
+            except Exception as e:
+                print(f"Warning: Error reading {banner_file}: {e}. Falling back to embedded banner text.")
+        return BANNER_TEXT.strip()
     
     def _get_cpp_banner_pattern(self) -> str:
         """Generate the expected C++ banner pattern"""
@@ -47,14 +58,11 @@ class BannerChecker:
         # Allow for whitespace variations in the comment block
         return rf'/\*\*\s*{escaped_banner}\s*\*/'
     
-    def _get_python_banner_pattern(self) -> str:
-        """Generate the expected Python/CMake banner pattern"""
-        # Split banner into lines and prefix each with #
+    def _commented_banner(self) -> str:
+        """Return the banner commented with leading '#' per line (for Python/CMake)."""
         banner_lines = self.banner_text.split('\n')
-        commented_lines = [f'# {line}'.rstrip() if line.strip() else '#' for line in banner_lines]
-        commented_banner = '\n'.join(commented_lines)
-        escaped_banner = re.escape(commented_banner)
-        return escaped_banner
+        commented_lines = [f"# {line}".rstrip() if line.strip() else "#" for line in banner_lines]
+        return "\n".join(commented_lines)
     
     def _check_cpp_file(self, file_path: Path) -> bool:
         """Check if a C++ file has the proper banner"""
@@ -74,17 +82,18 @@ class BannerChecker:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # For Python files, skip shebang line if present
+            # For Python files, skip shebang line if present and any immediate blank lines after it
             lines = content.split('\n')
             start_index = 0
             if file_path.suffix == '.py' and lines and lines[0].startswith('#!'):
                 start_index = 1
+                while start_index < len(lines) and lines[start_index].strip() == "":
+                    start_index += 1
             
             # Check if banner appears at the start (after potential shebang)
             content_to_check = '\n'.join(lines[start_index:])
-            pattern = self._get_python_banner_pattern()
-            
-            return content_to_check.startswith(self.banner_text.replace('\n', '\n# ').replace('\n# \n', '\n#\n'))
+            commented_banner = self._commented_banner()
+            return content_to_check.startswith(commented_banner)
         except Exception as e:
             print(f"Error reading {file_path}: {e}")
             return False
@@ -136,6 +145,46 @@ class BannerChecker:
                     non_compliant_files.append(file_path)
         
         return compliant_files, non_compliant_files
+
+    # --- Fixers ---
+    def _cpp_banner_block(self) -> str:
+        return f"/**\n{self.banner_text}\n*/\n\n"
+
+    def _python_cmake_banner_block(self) -> str:
+        return self._commented_banner() + "\n\n"
+
+    def fix_file(self, file_path: Path) -> bool:
+        """Insert the appropriate banner into the file if missing. Returns True if modified."""
+        if self.check_file(file_path):
+            return False
+        try:
+            text = file_path.read_text(encoding='utf-8')
+        except Exception as e:
+            print(f"Error reading {file_path} for fixing: {e}")
+            return False
+
+        if file_path.suffix in self.cpp_extensions:
+            new_text = self._cpp_banner_block() + text
+        elif (file_path.suffix in self.python_extensions or
+              file_path.suffix in self.cmake_extensions or
+              file_path.name in self.cmake_files):
+            # Respect Python shebang on first line
+            if file_path.suffix == '.py' and text.startswith('#!'):
+                lines = text.split('\n')
+                shebang = lines[0]
+                rest = '\n'.join(lines[1:])
+                new_text = shebang + "\n" + self._python_cmake_banner_block() + rest
+            else:
+                new_text = self._python_cmake_banner_block() + text
+        else:
+            return False
+
+        try:
+            file_path.write_text(new_text, encoding='utf-8')
+            return True
+        except Exception as e:
+            print(f"Error writing {file_path}: {e}")
+            return False
     
     def generate_banner_examples(self):
         """Generate and print example banner formats for different file types"""
@@ -155,17 +204,22 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description="Check copyright banner compliance in source files"
+        description="Check and optionally fix copyright banners in source files"
     )
     parser.add_argument(
-        "--banner-file", 
-        default="BANNER.txt",
-        help="Path to banner text file (default: BANNER.txt)"
+        "--banner-file",
+        default=None,
+        help="Optional path to banner text file (overrides embedded banner)"
     )
     parser.add_argument(
         "--directory",
         default=".",
         help="Root directory to scan (default: current directory)"
+    )
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Automatically add missing banners to non-compliant files"
     )
     parser.add_argument(
         "--show-examples",
@@ -180,22 +234,37 @@ def main():
     
     args = parser.parse_args()
     
-    try:
-        checker = BannerChecker(args.banner_file)
-    except SystemExit:
-        return 1
+    checker = BannerChecker(args.banner_file)
     
     if args.show_examples:
         checker.generate_banner_examples()
         return 0
     
+    
     print(f"Scanning {args.directory} for copyright banner compliance...")
-    print(f"Using banner from: {args.banner_file}")
+    if args.banner_file:
+        print(f"Using banner from: {args.banner_file}")
+    else:
+        print("Using embedded banner text")
     print()
     
     compliant_files, non_compliant_files = checker.scan_directory(args.directory)
     
     total_files = len(compliant_files) + len(non_compliant_files)
+
+    if args.fix and non_compliant_files:
+        print(f"Attempting to fix {len(non_compliant_files)} non-compliant files by inserting banners...\n")
+        fixed = 0
+        for file_path in sorted(non_compliant_files):
+            if checker.fix_file(file_path):
+                print(f"  + Fixed: {file_path}")
+                fixed += 1
+            else:
+                print(f"  - Skipped: {file_path}")
+        print(f"\nFixed {fixed}/{len(non_compliant_files)} files.")
+        # Re-scan after fixing
+        compliant_files, non_compliant_files = checker.scan_directory(args.directory)
+        total_files = len(compliant_files) + len(non_compliant_files)
     
     if args.verbose:
         print("Compliant files:")
@@ -215,7 +284,7 @@ def main():
     
     if non_compliant_files:
         print(f"\n{len(non_compliant_files)} files need copyright banners added.")
-        print("Run with --show-examples to see the expected format.")
+        print("Run with --fix to add them automatically, or --show-examples to see the expected format.")
         return 1
     else:
         print("All files are compliant! ✓")

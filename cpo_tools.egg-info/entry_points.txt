@@ -1,0 +1,2 @@
+[console_scripts]
+cpo-generator = cpo_tools.cpo_generator:main

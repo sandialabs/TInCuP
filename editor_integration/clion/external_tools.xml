@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CLion External Tools Configuration for TInCuP -->
+<!-- Import this file via File -> Settings -> Tools -> External Tools -> Import -->
+<toolSet name="TInCuP CPO Generator">
+  <tool name="Generate CPO" description="Generate a CPO at cursor location" showInMainMenu="true" showInEditor="true" showInProject="false" showInSearchPopup="false" disabled="false" useConsole="true" showConsoleOnStdOut="true" showConsoleOnStdErr="true" synchronizeAfterRun="true">
+    <exec>
+      <option name="COMMAND" value="cpo-generator" />
+      <option name="PARAMETERS" value="{&quot;cpo_name&quot;: &quot;$Prompt$&quot;, &quot;args&quot;: [&quot;$SelectedText$$Prompt$&quot;]}" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+  <tool name="Generate CPO with Doxygen" description="Generate a CPO with Doxygen comments at cursor location" showInMainMenu="true" showInEditor="true" showInProject="false" showInSearchPopup="false" disabled="false" useConsole="true" showConsoleOnStdOut="true" showConsoleOnStdErr="true" synchronizeAfterRun="true">
+    <exec>
+      <option name="COMMAND" value="cpo-generator" />
+      <option name="PARAMETERS" value="--doxygen {&quot;cpo_name&quot;: &quot;$Prompt$&quot;, &quot;args&quot;: [&quot;$SelectedText$$Prompt$&quot;]}" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+  <tool name="Generate CPO Interactive" description="Interactively generate a CPO" showInMainMenu="true" showInEditor="true" showInProject="false" showInSearchPopup="false" disabled="false" useConsole="true" showConsoleOnStdOut="true" showConsoleOnStdErr="true" synchronizeAfterRun="true">
+    <exec>
+      <option name="COMMAND" value="python3" />
+      <option name="PARAMETERS" value="-c &quot;import json; name=input('CPO name: '); args=input('Arguments (space-separated): ').split(); print(json.dumps({'cpo_name': name, 'args': args}))&quot; | cpo-generator --doxygen" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+  <tool name="Verify CPO Patterns" description="Verify CPO pattern compliance in current file" showInMainMenu="true" showInEditor="true" showInProject="true" showInSearchPopup="false" disabled="false" useConsole="true" showConsoleOnStdOut="true" showConsoleOnStdErr="true" synchronizeAfterRun="true">
+    <exec>
+      <option name="COMMAND" value="python3" />
+      <option name="PARAMETERS" value="-m cpo_tools.cpo_verification &quot;$FilePath$&quot;" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+  <tool name="Run CPO Tests" description="Run all CPO tests" showInMainMenu="true" showInEditor="false" showInProject="true" showInSearchPopup="false" disabled="false" useConsole="true" showConsoleOnStdOut="true" showConsoleOnStdErr="true" synchronizeAfterRun="true">
+    <exec>
+      <option name="COMMAND" value="python3" />
+      <option name="PARAMETERS" value="tests/run_tests.py --verbose" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+  <tool name="Show LLM Help" description="Show available LLM operation patterns" showInMainMenu="true" showInEditor="false" showInProject="false" showInSearchPopup="false" disabled="false" useConsole="true" showConsoleOnStdOut="true" showConsoleOnStdErr="true" synchronizeAfterRun="true">
+    <exec>
+      <option name="COMMAND" value="cpo-generator" />
+      <option name="PARAMETERS" value="--llm-help" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+</toolSet>

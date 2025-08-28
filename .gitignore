@@ -4,6 +4,7 @@
 
 # Build directories
 build
+local_ci_build/
 
 # Python Bytecode
 *.pyc

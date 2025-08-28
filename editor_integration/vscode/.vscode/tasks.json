@@ -1,0 +1,173 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Generate CPO",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "-m", "cpo_tools.cpo_generator"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "Generate CPO from JSON specification",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "Generate CPO (Interactive)",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "-c",
+                "import json; spec = input('Enter CPO JSON spec: '); print('Generated CPO:'); import subprocess; subprocess.run(['python3', '-m', 'cpo_tools.cpo_generator', spec])"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "detail": "Interactive CPO generation with input prompt"
+        },
+        {
+            "label": "Generate CPO (LLM Mode)",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "-m", "cpo_tools.cpo_generator",
+                "--llm-help"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "detail": "Show LLM mode operation patterns"
+        },
+        {
+            "label": "Verify CPO Patterns",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "-m", "cpo_tools.cpo_verification",
+                "${workspaceFolder}"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": {
+                "owner": "tincup",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^([^:]+):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            },
+            "detail": "Verify CPO pattern compliance in workspace"
+        },
+        {
+            "label": "Verify Current File",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "-m", "cpo_tools.cpo_verification",
+                "${file}"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": {
+                "owner": "tincup",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^CPO '(.*)' has issues:",
+                    "message": 1
+                }
+            },
+            "detail": "Verify CPO patterns in the currently open file"
+        },
+        {
+            "label": "Run CPO Tests",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "run_tests.py",
+                "--verbose"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": {
+                "owner": "python-unittest",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(FAIL|ERROR):\\s+(.*)\\s+\\((.*)\\)$",
+                    "severity": 1,
+                    "message": 2,
+                    "file": 3
+                }
+            },
+            "detail": "Run all CPO pattern verification tests"
+        },
+        {
+            "label": "Install CPO Tools",
+            "type": "shell",
+            "command": "make",
+            "args": ["install-dev"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "detail": "Install CPO development tools and dependencies"
+        },
+        {
+            "label": "Generate CPO from Selection",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "-m", "cpo_tools.cpo_generator",
+                "${selectedText}"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "detail": "Generate CPO from selected JSON text"
+        }
+    ]
+}

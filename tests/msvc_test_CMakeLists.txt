@@ -1,0 +1,69 @@
+# CMakeLists.txt for MSVC Testing
+# Usage: 
+#   mkdir build && cd build
+#   cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+#   cmake --build . --config Release
+#   .\Release\msvc_smoke_test.exe
+
+cmake_minimum_required(VERSION 3.20)
+project(tincup_msvc_test CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# MSVC-specific configuration
+if(MSVC)
+    # Enable C++20 and strict conformance
+    add_compile_options(/std:c++20 /permissive-)
+    
+    # Enable additional warnings
+    add_compile_options(/W4)
+    
+    # Treat warnings as errors for strict testing
+    add_compile_options(/WX)
+    
+    # Enable optimization in Release mode
+    add_compile_options($<$<CONFIG:Release>:/O2>)
+    
+    # Disable optimization in Debug mode for better debugging
+    add_compile_options($<$<CONFIG:Debug>:/Od>)
+    
+    # Enable debug information
+    add_compile_options($<$<CONFIG:Debug>:/Zi>)
+    
+    # Enable runtime checks in Debug mode
+    add_compile_options($<$<CONFIG:Debug>:/RTC1>)
+    
+    message(STATUS "MSVC configuration enabled with C++20 support")
+endif()
+
+# Find TInCuP - assume it's in the parent directory
+set(TINCUP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
+add_subdirectory("${TINCUP_ROOT}/build_systems/cmake" tincup)
+
+# Create the test executable
+add_executable(msvc_smoke_test msvc_smoke_test.cpp)
+target_link_libraries(msvc_smoke_test PRIVATE tincup::tincup)
+
+# Add custom target to run the test
+add_custom_target(run_msvc_test
+    COMMAND msvc_smoke_test
+    DEPENDS msvc_smoke_test
+    COMMENT "Running MSVC smoke test"
+    VERBATIM
+)
+
+# Enable testing
+enable_testing()
+add_test(NAME msvc_smoke_test COMMAND msvc_smoke_test)
+
+# Print configuration information
+message(STATUS "TInCuP MSVC Test Configuration:")
+message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "  Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+if(MSVC)
+    message(STATUS "  MSVC Version: ${MSVC_VERSION}")
+    message(STATUS "  MSVC Toolset: ${CMAKE_VS_PLATFORM_TOOLSET}")
+endif()

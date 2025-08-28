@@ -1,0 +1,128 @@
+
+{% macro boolean_dispatch(cpo_name, dispatch_info, arg_types, arg_pairs, arg_names, concept_types, arg_pairs_no_dispatch, arg_names_no_dispatch, concept_types_no_dispatch) %}
+
+  static constexpr struct {{ dispatch_info.options[0] }}_tag {} {{ dispatch_info.options[0] }};
+  static constexpr struct {{ dispatch_info.options[1] }}_tag {} {{ dispatch_info.options[1] }};
+
+// Runtime dispatch overload
+template<{{ arg_types }}>
+constexpr auto operator()({{ arg_pairs }}) const
+  requires (tincup::invocable_c<{{ cpo_name }}_ftor, {{ concept_types }}, {{ dispatch_info.options[0] }}_tag> && \
+            tincup::invocable_c<{{ cpo_name }}_ftor, {{ concept_types }}, {{ dispatch_info.options[1] }}_tag>)
+{
+  tincup::BoolDispatch dispatcher({{ dispatch_info.dispatch_arg }});
+  return dispatcher.receive([&](auto dispatch_constant) {
+    if constexpr (dispatch_constant.value) {
+      return tag_invoke(*this, {{ arg_names }}, {{ dispatch_info.options[0] }});
+    } else {
+      return tag_invoke(*this, {{ arg_names }}, {{ dispatch_info.options[1] }});
+    }
+  });
+}
+
+// Compile-time dispatch overload for {{ dispatch_info.options[0] }}
+template<{{ arg_types }}>
+constexpr auto operator()({{ arg_pairs_no_dispatch }}, {{ dispatch_info.options[0] }}_tag) const
+  requires (tincup::invocable_c<{{ cpo_name }}_ftor, {{ concept_types_no_dispatch }}, {{ dispatch_info.options[0] }}_tag>)
+{
+  return tag_invoke(*this, {{ arg_names_no_dispatch }}, {{ dispatch_info.options[0] }});
+}
+
+// Compile-time dispatch overload for {{ dispatch_info.options[1] }}
+template<{{ arg_types }}>
+constexpr auto operator()({{ arg_pairs_no_dispatch }}, {{ dispatch_info.options[1] }}_tag) const
+  requires (tincup::invocable_c<{{ cpo_name }}_ftor, {{ concept_types_no_dispatch }}, {{ dispatch_info.options[1] }}_tag>)
+{
+  return tag_invoke(*this, {{ arg_names_no_dispatch }}, {{ dispatch_info.options[1] }});
+}
+{% endmacro %}
+
+{% macro string_dispatch(cpo_name, dispatch_info, arg_types, arg_pairs, arg_names, concept_types, arg_pairs_no_dispatch, arg_names_no_dispatch, concept_types_no_dispatch) %}
+{% for option in dispatch_info.options %} 
+  static constexpr struct {{ option }}_tag {} {{ option }};{% endfor %}
+
+  static constexpr struct not_found_tag {} not_found;
+
+  // Precomputed options table as a class-scope constant (single instance across TUs)
+  inline static constexpr auto options_array = tincup::string_view_array<{{ dispatch_info.options | length }}>{ {% for option in dispatch_info.options %}
+    "{{ option }}"{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  };
+
+  // Runtime dispatch overload for string
+  template<{{ arg_types }}>
+  requires{{' '}}
+      {%- set conditions = [] -%}
+      {%- for option in dispatch_info.options -%}
+        {%- set conditions = conditions + ['tincup::invocable_c<' + cpo_name + '_ftor, ' + concept_types + ', ' + cpo_name + '_ftor::' + option + '_tag>'] -%}
+      {%- endfor -%}
+      {%- set conditions = conditions + ['tincup::invocable_c<' + cpo_name + '_ftor, ' + concept_types + ', ' + cpo_name + '_ftor::not_found_tag>'] -%}
+      {{ conditions | join(' &&\n      ') }}
+  constexpr auto operator()({{ arg_pairs }}, std::string_view {{ dispatch_info.dispatch_arg }}) const 
+  noexcept({%- set conditions = [] -%}
+      {%- for option in dispatch_info.options -%}
+        {%- set conditions = conditions + ['tincup::nothrow_invocable_c<' + cpo_name + '_ftor, ' + concept_types + ', ' + cpo_name + '_ftor::' + option + '_tag>'] -%}
+      {%- endfor -%}
+      {%- set conditions = conditions + ['tincup::nothrow_invocable_c<' + cpo_name + '_ftor, ' + concept_types + ', ' + cpo_name + '_ftor::not_found_tag>'] -%}
+      {{ conditions | join(' && ') }}) {
+    tincup::StringDispatch<{{ dispatch_info.options | length }}> dispatcher({{ dispatch_info.dispatch_arg }}, options_array);
+    return dispatcher.receive([&](auto dispatch_constant) {
+      if constexpr (dispatch_constant.value < {{ dispatch_info.options | length }}) {
+        {% for option in dispatch_info.options %}
+        if constexpr (dispatch_constant.value == {{ loop.index0 }}) {
+          return tag_invoke(*this, {{ arg_names }}, {{ option }});
+        }
+        {% endfor %}
+      } else {
+        return tag_invoke(*this, {{ arg_names }}, not_found);
+      }
+    });
+  }
+
+  // Compile-time dispatch overloads for string
+  {% for option in dispatch_info.options %}
+  template<{{ arg_types }}>
+  requires tincup::invocable_c<{{ cpo_name }}_ftor, {{ concept_types_no_dispatch }}, {{ option }}_tag>
+  constexpr auto operator()({{ arg_pairs_no_dispatch }}, {{ option }}_tag) const
+  noexcept(tincup::nothrow_invocable_c<{{ cpo_name }}_ftor, {{ concept_types_no_dispatch }}, {{ option }}_tag>) {
+    return tag_invoke(*this, {{ arg_names_no_dispatch }}, {{ option }});
+  }
+  {% endfor %}
+  
+  template<{{ arg_types }}>
+  requires tincup::invocable_c<{{ cpo_name }}_ftor, {{ concept_types_no_dispatch }}, not_found_tag>
+  constexpr auto operator()({{ arg_pairs_no_dispatch }}, not_found_tag) const
+  noexcept(tincup::nothrow_invocable_c<{{ cpo_name }}_ftor, {{ concept_types_no_dispatch }}, not_found_tag>) {
+    return tag_invoke(*this, {{ arg_names_no_dispatch }}, not_found);
+  }
+{% endmacro %}
+
+{% macro typed_operator_overloads(cpo_name, arg_types, arg_pairs, arg_names, concept_types, canonical_concept_args) %}
+{%- if arg_types %}
+  // Typed operator() overload - positive case only (generic)
+  // Negative cases handled by tagged fallback in cpo_base
+  template<{{ arg_types }}>
+    requires tincup::invocable_c<{{ canonical_concept_args }}>
+  constexpr auto operator()({{ arg_pairs }}) const
+    noexcept(tincup::nothrow_invocable_c<{{ canonical_concept_args }}>) 
+    -> tincup::invocable_t<{{ canonical_concept_args }}> {
+    return tincup::tag_invoke_cpo(*this, {{ arg_names }});
+  }
+{%- elif arg_pairs %}
+  // Typed operator() overload - positive case only (concrete)  
+  // Negative cases handled by tagged fallback in cpo_base
+  constexpr auto operator()({{ arg_pairs }}) const
+    noexcept(noexcept(tincup::tag_invoke_cpo(*this, {{ arg_names }}))) 
+    -> decltype(tincup::tag_invoke_cpo(*this, {{ arg_names }})) {
+    return tincup::tag_invoke_cpo(*this, {{ arg_names }});
+  }
+{%- else %}
+  // Zero-argument CPO positive case only
+  // Negative cases handled by tagged fallback in cpo_base
+  constexpr auto operator()() const
+    noexcept(noexcept(tincup::tag_invoke_cpo(*this))) 
+    -> decltype(tincup::tag_invoke_cpo(*this)) {
+    return tincup::tag_invoke_cpo(*this);
+  }
+{%- endif %}
+{% endmacro %}

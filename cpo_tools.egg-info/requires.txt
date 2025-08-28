@@ -1,0 +1,9 @@
+jinja2
+click>=8.0
+colorama>=0.4
+pyyaml>=6.0
+
+[dev]
+pytest>=7.0
+black>=22.0
+mypy>=0.990

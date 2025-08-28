@@ -1,0 +1,62 @@
+{
+  "examples": [
+    {
+      "name": "Generic CPO",
+      "description": "A basic CPO with generic template parameters",
+      "command_args": ["{\"cpo_name\": \"generic_cpo\", \"args\": [\"$T1&: arg1\", \"$T2&: arg2\"]}"],
+      "order": 1
+    },
+    {
+      "name": "Concrete CPO", 
+      "description": "A CPO with concrete type parameters",
+      "command_args": ["{\"cpo_name\": \"concrete_cpo\", \"args\": [\"int: value\", \"double&: ref\"]}"],
+      "order": 2
+    },
+    {
+      "name": "Forwarding Reference",
+      "description": "A CPO using perfect forwarding for universal references", 
+      "command_args": ["{\"cpo_name\": \"forwarding_ref_cpo\", \"args\": [\"$T&&: fwd_ref\"]}"],
+      "order": 3
+    },
+    {
+      "name": "Variadic Arguments",
+      "description": "A CPO that accepts a variable number of arguments",
+      "command_args": ["{\"cpo_name\": \"variadic_cpo\", \"args\": [\"$T&...: variadic_args\"]}"],
+      "order": 4
+    },
+    {
+      "name": "Boolean Dispatch CPO",
+      "description": "A CPO with runtime boolean dispatch that compiles to zero-overhead compile-time specialization",
+      "command_args": [
+        "{\"cpo_name\": \"conditional_process\", \"args\": [\"$T&: data\"], \"runtime_dispatch\": {\"type\": \"bool\", \"dispatch_arg\": \"use_fast_path\", \"options\": [\"fast\", \"safe\"]}}"
+      ],
+      "usage_examples": [
+        "// Runtime usage with compile-time optimization",
+        "auto result = conditional_process(data, runtime_flag);",
+        "",
+        "// Direct compile-time usage", 
+        "auto result = conditional_process(data, conditional_process_ftor::fast{});"
+      ],
+      "order": 5
+    },
+    {
+      "name": "String Dispatch CPO", 
+      "description": "A CPO with runtime string dispatch that converts string selection into compile-time specialization",
+      "command_args": [
+        "{\"cpo_name\": \"compression_method\", \"args\": [\"$const T&: input\"], \"runtime_dispatch\": {\"type\": \"string\", \"dispatch_arg\": \"algorithm\", \"options\": [\"lz4\", \"zstd\", \"gzip\"]}}"
+      ],
+      "usage_examples": [
+        "// Runtime string -> compile-time dispatch (zero overhead after lookup)",
+        "auto compressed = compression_method(data, \"lz4\");",
+        "",
+        "// Direct compile-time usage",
+        "auto compressed = compression_method(data, compression_method_ftor::lz4_tag{});"
+      ],
+      "order": 6
+    }
+  ],
+  "template": {
+    "section_header": "### Examples\n\n",
+    "section_footer": "\n**Static Dispatch Benefits:**\n- 🚀 Zero runtime overhead after initial dispatch\n- 🎯 Compiler can fully optimize each path independently  \n- 🔧 Both runtime convenience and compile-time performance\n- 🛡️ Type-safe dispatch with comprehensive error checking\n"
+  }
+}

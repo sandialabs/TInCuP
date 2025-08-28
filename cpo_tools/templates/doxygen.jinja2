@@ -1,0 +1,29 @@
+// NOTE: To make @cpo, @cpo_example, and @tag_invoke_impl recognized by Doxygen,
+// add these aliases to your Doxyfile:
+//   ALIASES += cpo="Customization Point Object"
+//   ALIASES += cpo_example="Example usage of CPO"
+//   ALIASES += tag_invoke_impl="Default tag_invoke overload implementation"
+/**
+ * @brief [TODO: Brief description for {{ cpo_name }}]
+ * @cpo
+ * @ingroup tincup_cpos
+ * [TODO: Detailed description of the CPO.]
+ *
+ * @cpo_example
+ * @code
+ * auto result = {{ cpo_name }}( args... );
+ * @endcode
+ */
+{{ cpo_definition }}
+
+/**
+ * @brief [TODO: Brief description for default tag_invoke overload]
+ * @tag_invoke_impl
+ * [TODO: Detailed description of the implementation.]
+ *
+{{ param_docs }}
+ * @return [TODO: Description of return value]
+ */
+{{ tag_invoke_signature }} {
+    // TODO: Implement default behavior
+}

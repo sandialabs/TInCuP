@@ -1,0 +1,29 @@
+[project]
+name = "cpo_tools"
+version = "0.1.0"
+description = "Code generation and verification tools for C++ CPO pattern"
+requires-python = ">=3.8"
+dependencies = [
+    "jinja2",
+    "click>=8.0",  # For better CLI interfaces
+    "colorama>=0.4",  # For colored output
+    "pyyaml>=6.0",  # For configuration files
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+cpo-generator = "cpo_tools.cpo_generator:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black>=22.0",
+    "mypy>=0.990",
+]
+
+
+[tool.setuptools]
+packages = ["cpo_tools"]

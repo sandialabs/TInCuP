@@ -1,0 +1,26 @@
+{
+    "recommendations": [
+        // C++ Development
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cmake-tools",
+        
+        // Python Development (for CPO tools)
+        "ms-python.python",
+        "ms-python.debugpy",
+        
+        // JSON/Configuration
+        "vscode.json-language-features",
+        
+        // Git Integration
+        "eamodio.gitlens",
+        
+        // Template Support
+        "samuelcolvin.jinjahtml",
+        
+        // General Development
+        "ms-vscode.vscode-json",
+        "streetsidesoftware.code-spell-checker"
+    ],
+    "unwantedRecommendations": []
+}

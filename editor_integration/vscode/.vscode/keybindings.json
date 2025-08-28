@@ -1,0 +1,35 @@
+[
+    {
+        "key": "ctrl+shift+c ctrl+g",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Generate CPO (Interactive)",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "ctrl+shift+c ctrl+v", 
+        "command": "workbench.action.tasks.runTask",
+        "args": "Verify Current File",
+        "when": "editorTextFocus && resourceExtname == .hpp"
+    },
+    {
+        "key": "ctrl+shift+c ctrl+t",
+        "command": "workbench.action.tasks.runTask", 
+        "args": "Run CPO Tests"
+    },
+    {
+        "key": "ctrl+shift+c ctrl+s",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Generate CPO from Selection",
+        "when": "editorHasSelection"
+    },
+    {
+        "key": "ctrl+shift+c ctrl+l",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Generate CPO (LLM Mode)"
+    },
+    {
+        "key": "ctrl+shift+c ctrl+a",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Verify CPO Patterns"
+    }
+]
