@@ -245,17 +245,17 @@ This is a header-only library. To use it, simply include the single header:
 
 ## Quick Start
 
-**New to the project?** See [docs/GETTING_STARTED.md](Getting started) for a complete guide.
+**New to the project?** See [Getting started](docs/GETTING_STARTED.md) for a complete guide.
 
 ## Documentation
 
-- [docs/GETTING_STARTED.md](Getting started)
-- [docs/BUILD_SYSTEMS.md](Build systems)
-- [docs/STATIC_DISPATCH.md](Static dispatch)
-- [docs/DIAGNOSTICS.md](Diagnostics)
-- [docs/MSVC_GUIDE.md](MSVC tips)
-- [docs/LOCAL_TESTING.md](Local testing)
-- [docs/DOXYGEN.md](Doxygen tags)
+- [Getting started](docs/GETTING_STARTED.md)
+- [Build systems](docs/BUILD_SYSTEMS.md)  
+- [Static dispatch](docs/STATIC_DISPATCH.md)
+- [Diagnostics](docs/DIAGNOSTICS.md)    
+- [MSVC tips](docs/MSVC_GUIDE.md)     
+- [Local testing](docs/LOCAL_TESTING.md)  
+- [Doxygen tags](docs/DOXYGEN.md)        
 
 ### Integration with Build Systems
 
