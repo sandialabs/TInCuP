@@ -30,39 +30,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      cpp: ${{ steps.filter.outputs.cpp }}
-      python: ${{ steps.filter.outputs.python }}
-      editor: ${{ steps.filter.outputs.editor }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            cpp:
-              - 'include/**'
-              - 'build_systems/**'
-              - 'CMakeLists.txt'
-              - 'examples/**'
-              - 'tests/**/*.cpp'
-              - 'tests/test.hpp'
-            python:
-              - 'cpo_tools/**'
-              - '*.py'
-              - 'pyproject.toml'
-              - 'tests/**/*.py'
-            editor:
-              - 'editor_integration/**'
-              - 'tests/*integration_test.sh'
-              - 'tests/vim_integration_test.sh'
-              - 'tests/vscode_config_check.sh'
-              - 'tests/clion_integration_test.sh'
   python-tests:
-    needs: changes
-    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -82,8 +50,6 @@ jobs:
           python3 tests/run_tests.py --verbose
 
   cmake-meson:
-    needs: changes
-    if: needs.changes.outputs.cpp == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -141,8 +107,6 @@ jobs:
 
   cmake-windows:
     name: CMake (Windows MSVC)
-    needs: changes
-    if: needs.changes.outputs.cpp == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -175,14 +139,16 @@ jobs:
 
   msvc-cpp20:
     name: MSVC C++20 Compilation Tests
-    needs: changes
-    if: needs.changes.outputs.cpp == 'true' || needs.changes.outputs.python == 'true'
     runs-on: windows-latest
     strategy:
       matrix:
         build_type: [Debug, Release]
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -300,8 +266,6 @@ jobs:
 
   cmake-macos:
     name: CMake/Meson (macOS)
-    needs: changes
-    if: needs.changes.outputs.cpp == 'true'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -364,8 +328,6 @@ jobs:
 
   msys2-mingw:
     name: CMake (Windows MSYS2 MinGW64)
-    needs: changes
-    if: needs.changes.outputs.cpp == 'true'
     runs-on: windows-latest
     defaults:
       run:
@@ -433,8 +395,6 @@ jobs:
 
   python-tests-macos:
     name: Python tests (macOS)
-    needs: changes
-    if: needs.changes.outputs.python == 'true'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -451,8 +411,6 @@ jobs:
           python3 tests/run_tests.py --verbose
 
   editor-integration:
-    needs: changes
-    if: needs.changes.outputs.editor == 'true' || needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
