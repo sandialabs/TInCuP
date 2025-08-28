@@ -1,7 +1,7 @@
 [project]
-name = "cpo_tools"
-version = "0.1.0"
-description = "Code generation and verification tools for C++ CPO pattern"
+name = "TInCuP"
+version = "1.0.0"
+description = "Library for Python generation of C++ customization point objects with tag_invoke" 
 requires-python = ">=3.8"
 dependencies = [
     "jinja2",
@@ -9,6 +9,13 @@ dependencies = [
     "colorama>=0.4",  # For colored output
     "pyyaml>=6.0",  # For configuration files
 ]
+license = {file = 'LICENSE'}
+readme = "README.md"
+authors = [{name = "Greg von Winckel", 
+            email = "gvonwin@sandia.gov"}
+]
+classifiers  
+
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
