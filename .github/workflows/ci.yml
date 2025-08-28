@@ -371,9 +371,15 @@ jobs:
           # Copy subproject instead of symlink to avoid sandbox/symlink issues
           rm -rf build/meson_smoke/subprojects/tincup
           mkdir -p build/meson_smoke/subprojects/tincup
-          cp -r "$GITHUB_WORKSPACE/build_systems/meson/"* build/meson_smoke/subprojects/tincup/
-          # Replace symlinked include with a real directory
+          # Avoid copying the 'include' symlink from the source; we'll add a real dir next
+          for entry in "$GITHUB_WORKSPACE/build_systems/meson"/*; do
+            name="$(basename "$entry")"
+            if [ "$name" = "include" ]; then continue; fi
+            cp -r "$entry" build/meson_smoke/subprojects/tincup/
+          done
+          # Add a real include directory for Meson sandbox
           rm -rf build/meson_smoke/subprojects/tincup/include
+          mkdir -p build/meson_smoke/subprojects/tincup
           cp -r "$GITHUB_WORKSPACE/include" build/meson_smoke/subprojects/tincup/include
           meson setup build/meson_smoke_build build/meson_smoke
           meson compile -C build/meson_smoke_build -v
