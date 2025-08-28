@@ -43,5 +43,9 @@ dev = [
 ]
 
 
-[tool.setuptools]
-packages = ["cpo_tools"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cpo_tools*"]
+
+[tool.setuptools.package-data]
+cpo_tools = ["templates/*", "templates/**/*"]
