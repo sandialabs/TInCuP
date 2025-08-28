@@ -237,7 +237,7 @@ Consider: add_assign(*vec_ptr, other_vec)
 
 ## C++ Library Usage
 
-This is a header-only library. To use it, simply include the main header:
+This is a header-only library. To use it, simply include the single header:
 
 ```cpp
 #include <tincup/tincup.hpp>
@@ -249,13 +249,13 @@ This is a header-only library. To use it, simply include the main header:
 
 ## Documentation
 
-- Getting started: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
-- Build systems: [docs/BUILD_SYSTEMS.md](docs/BUILD_SYSTEMS.md)
-- Static dispatch: [docs/STATIC_DISPATCH.md](docs/STATIC_DISPATCH.md)
-- Diagnostics: [docs/DIAGNOSTICS.md](docs/DIAGNOSTICS.md)
-- MSVC tips: [docs/MSVC_GUIDE.md](docs/MSVC_GUIDE.md)
-- Local testing: [docs/LOCAL_TESTING.md](docs/LOCAL_TESTING.md)
-- Doxygen tags: [docs/DOXYGEN.md](docs/DOXYGEN.md)
+- [docs/GETTING_STARTED.md](Getting started)
+- [docs/BUILD_SYSTEMS.md](Build systems)
+- [docs/STATIC_DISPATCH.md](Static dispatch)
+- [docs/DIAGNOSTICS.md](Diagnostics)
+- [docs/MSVC_GUIDE.md](MSVC tips)
+- [docs/LOCAL_TESTING.md](Local testing)
+- [docs/DOXYGEN.md](Doxygen tags)
 
 ### Integration with Build Systems
 
