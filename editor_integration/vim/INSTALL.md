@@ -25,13 +25,13 @@ editor_integration/vim/install.sh --nvim
 ### vim-plug (Vim/Neovim)
 
 ```vim
-Plug 'gregvw/tincup', {'rtp': 'editor_integration/vim'}
+Plug 'sandialabs/TInCuP', {'rtp': 'editor_integration/vim'}
 ```
 
 ### Vundle (Vim)
 
 ```vim
-Plugin 'gregvw/tincup'
+Plugin 'sandialabs/TInCuP'
 " Ensure Vim sees the plugin under the repo's subdirectory
 execute 'set rtp+=$HOME/.vim/bundle/tincup/editor_integration/vim'
 ```
@@ -54,7 +54,7 @@ ln -s /path/to/repo/editor_integration/vim/* ~/.vim/pack/tincup/start/tincup/
 
 ```lua
 -- inside packer.startup(function(use) ... end)
-use { 'gregvw/tincup', rtp = 'editor_integration/vim' }
+use { 'sandialabs/TInCuP', rtp = 'editor_integration/vim' }
 ```
 
 ### lazy.nvim (Neovim)

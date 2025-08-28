@@ -21,7 +21,7 @@ include(FetchContent)
 
 FetchContent_Declare(
   tincup
-  GIT_REPOSITORY https://github.com/gregvw/tincup.git
+  GIT_REPOSITORY https://github.com/sandialabs/TInCuP.git
   GIT_TAG        main
   SOURCE_SUBDIR  build_systems/cmake  # Important: point to this subdirectory
 )

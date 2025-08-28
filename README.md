@@ -4,7 +4,7 @@
   <img src="tincup.png" alt="TInCuP Logo" width="200"/>
 </div>
 
-[![CI](https://github.com/gregvw/tincup/actions/workflows/ci.yml/badge.svg)](https://github.com/gregvw/tincup/actions/workflows/ci.yml)
+[![CI](https://github.com/sandialabs/TInCuP/actions/workflows/ci.yml/badge.svg)](https://github.com/sandialabs/TInCuP/actions/workflows/ci.yml)
 [![CMake](https://img.shields.io/badge/CMake-supported-blue?logo=cmake)](#cmake)
 [![Meson](https://img.shields.io/badge/Meson-supported-brightgreen)](#meson)
 [![VS%20Code](https://img.shields.io/badge/VS%20Code-integration-007ACC?logo=visualstudiocode)](docs/VSCODE_INTEGRATION.md)
@@ -344,7 +344,7 @@ Standard FetchContent integration works seamlessly:
 
 ```cmake
 FetchContent_Declare(tincup
-  GIT_REPOSITORY https://github.com/gregvw/tincup.git)
+  GIT_REPOSITORY https://github.com/sandialabs/TInCuP.git)
 FetchContent_MakeAvailable(tincup)
 target_link_libraries(your_target PRIVATE tincup::tincup)
 ```
@@ -937,7 +937,7 @@ This repository contains a fully functional Vim plugin that integrates the code 
 Using a plugin manager like [vim-plug](https://github.com/junegunn/vim-plug), add the following to your `.vimrc`:
 
 ```vim
-Plug 'gregvw/tincup', {'rtp': 'editor_integration/vim'}
+Plug 'sandialabs/TInCuP', {'rtp': 'editor_integration/vim'}
 ```
 
 ### Usage

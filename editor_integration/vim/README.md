@@ -7,13 +7,13 @@ Vim plugin for `tincup` with `:CPO` and `:CPOD` commands.
 Using [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```vim
-Plug 'gregvw/tincup', {'rtp': 'editor_integration/vim'}
+Plug 'sandialabs/TInCuP', {'rtp': 'editor_integration/vim'}
 ```
 
 Using [Vundle](https://github.com/VundleVim/Vundle.vim):
 
 ```vim
-Plugin 'gregvw/tincup', {'rtp': 'editor_integration/vim'}
+Plugin 'sandialabs/TInCuP', {'rtp': 'editor_integration/vim'}
 ```
 
 ## Usage

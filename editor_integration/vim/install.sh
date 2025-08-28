@@ -5,7 +5,7 @@ set -euo pipefail
 # - Detects vim-plug, Vundle, or Pathogen usage
 # - Prints recommended vimrc lines, or appends them with --apply
 
-REPO_SLUG="gregvw/tincup"
+REPO_SLUG="sandialabs/TInCuP"
 RTP_SUBDIR="editor_integration/vim"
 VIMRC="${VIMRC:-$HOME/.vimrc}"
 NVIMRC_DEFAULT="$HOME/.config/nvim/init.vim"

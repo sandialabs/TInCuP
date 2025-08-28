@@ -138,7 +138,7 @@ target_link_libraries(your_target PRIVATE tincup::tincup)
 Or with FetchContent:
 ```cmake
 FetchContent_Declare(tincup 
-    GIT_REPOSITORY https://github.com/gregvw/tincup.git)
+    GIT_REPOSITORY https://github.com/sandialabs/TInCuP.git)
 FetchContent_MakeAvailable(tincup)
 target_link_libraries(your_target PRIVATE tincup::tincup)
 ```

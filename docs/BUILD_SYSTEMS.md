@@ -21,7 +21,7 @@ For most users, the root-level `CMakeLists.txt` provides seamless integration:
 include(FetchContent)
 
 FetchContent_Declare(tincup
-  GIT_REPOSITORY https://github.com/gregvw/tincup.git
+  GIT_REPOSITORY https://github.com/sandialabs/TInCuP.git
   GIT_TAG        main)
 FetchContent_MakeAvailable(tincup)
 
@@ -36,7 +36,7 @@ If you want to explicitly use the organized structure:
 
 ```cmake
 FetchContent_Declare(tincup
-  GIT_REPOSITORY https://github.com/gregvw/tincup.git
+  GIT_REPOSITORY https://github.com/sandialabs/TInCuP.git
   SOURCE_SUBDIR  build_systems/cmake)
 FetchContent_MakeAvailable(tincup)
 ```
@@ -82,12 +82,12 @@ If you're getting this error with FetchContent, ensure you're using the root rep
 
 **Correct:**
 ```cmake
-GIT_REPOSITORY https://github.com/gregvw/tincup.git
+GIT_REPOSITORY https://github.com/sandialabs/TInCuP.git
 ```
 
 **Incorrect:**
 ```cmake
-GIT_REPOSITORY https://github.com/gregvw/tincup.git/build_systems/cmake
+GIT_REPOSITORY https://github.com/sandialabs/TInCuP.git/build_systems/cmake
 ```
 
 ### "Target not found" Error
