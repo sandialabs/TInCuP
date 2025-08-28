@@ -61,7 +61,7 @@ Troubleshooting CLI on macOS/Linux:
 
 ## Why Should I Care About Customization Points (and TInCuP?)
 
-Have you ever been in a situation like as a developer like the following?
+Have you ever been in a situation like the following?
 
 - You are developing `ImpressiveLib`, a very impressive library.
 - `ImpressiveLib` uses `AwesomeType`, which is defined in `CoolLib`, an open source library that you *don't* own. 
