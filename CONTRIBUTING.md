@@ -59,3 +59,18 @@ Please review and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 ## Security
 
 If you believe you’ve found a security vulnerability, please follow our [Security Policy](SECURITY.md) and do not open a public issue with sensitive details.
+
+## Branching & Release Workflow
+
+- Branching model (GitFlow‑lite):
+  - Feature/bug branches off `develop` (e.g., `feature/...`, `fix/...`).
+  - Open PRs into `develop` for review and CI.
+  - Periodically merge `develop` into `main` to release.
+  - Tag releases on `main` (SemVer). PyPI publishes from `main` only.
+- Hotfixes:
+  - Branch off `main` (e.g., `hotfix/...`), PR into `main`, tag, then back‑merge into `develop`.
+- CI:
+  - CI runs on pushes to `main` and `develop`, and on PRs targeting either branch.
+  - Warnings are treated as errors for our tests/examples; consumers aren’t affected.
+- Protections (recommended):
+  - Enable branch protection for `main` and `develop` (require PR reviews and passing checks; disallow force‑push).

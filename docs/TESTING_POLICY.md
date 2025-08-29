@@ -19,7 +19,10 @@ This project requires tests to accompany major new functionality. Bug fixes shou
 
 Automated tests run in CI across multiple Python versions and toolchains (GCC/Clang/MSVC; CMake/Meson). PRs adding significant functionality without tests will not be merged absent a clear, documented justification.
 
+## Fuzzing
+
+We run a lightweight fuzzing job (Python, atheris/libFuzzer) against the generator pipeline to uncover unexpected exceptions on malformed inputs. See `tests/fuzz/fuzz_cpo_generator.py`. The job is time-bounded and non-blocking; crashes will be investigated and converted into regression tests where practical.
+
 ## Evidence of Adherence
 
 Recent changes (e.g., CPO generator improvements, verification enhancements, Windows/MSYS2 and Meson/CMake smoke tests) include accompanying tests under `tests/` and dedicated CI jobs that exercise them.
-

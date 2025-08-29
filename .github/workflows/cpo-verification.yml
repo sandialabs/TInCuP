@@ -12,7 +12,7 @@ on:
       - 'pyproject.toml'
       - '.github/workflows/**'
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
     paths:
       - 'include/**'
       - 'cpo_tools/**'

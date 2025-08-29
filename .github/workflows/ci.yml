@@ -14,7 +14,7 @@ on:
       - 'editor_integration/vscode/.vscode/settings.json'
 
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
     paths-ignore:
       - '**.md'
       - '**.rst'
@@ -493,3 +493,21 @@ jobs:
           args = ['run-clang-tidy', '-p', 'build', '-quiet'] + files
           subprocess.run(args, check=False)
           PY
+
+  python-fuzz:
+    name: Python Fuzz (atheris)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install atheris
+      - name: Run fuzz harness (time-bounded)
+        run: |
+          python tests/fuzz/fuzz_cpo_generator.py -max_total_time=60
