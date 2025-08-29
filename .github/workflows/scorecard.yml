@@ -10,7 +10,7 @@ on:
   # To guarantee Maintained check is occasionally updated. See
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   schedule:
-    - cron: '44 0 * * 2'
+    - cron: '29 7 * * 2'
   push:
     branches: [ "main" ]
 
@@ -76,4 +76,3 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
-
