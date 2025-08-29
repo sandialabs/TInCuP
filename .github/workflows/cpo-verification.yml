@@ -22,6 +22,9 @@ on:
       - 'pyproject.toml'
       - '.github/workflows/**'
 
+permissions:
+  contents: read
+
 jobs:
   verify-patterns:
     runs-on: ubuntu-latest
