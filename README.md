@@ -5,6 +5,7 @@
 </div>
 
 [![CI](https://github.com/sandialabs/TInCuP/actions/workflows/ci.yml/badge.svg)](https://github.com/sandialabs/TInCuP/actions/workflows/ci.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11107/badge)](https://www.bestpractices.dev/projects/11107)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sandialabs/TInCuP/badge)](https://securityscorecards.dev/viewer/?uri=github.com/sandialabs/TInCuP)
 [![PyPI](https://img.shields.io/pypi/v/TInCuP.svg)](https://pypi.org/project/TInCuP/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/TInCuP.svg)](https://pypi.org/project/TInCuP/)

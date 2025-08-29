@@ -434,3 +434,62 @@ jobs:
       - name: Verify MSVC CI configuration
         run: |
           bash tests/test_msvc_ci.sh
+
+  clang-analyzer:
+    name: Clang Static Analyzer (CMake)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build and analyzer tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build clang clang-tools
+      - name: Configure (CMake, Ninja, Clang)
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          cmake -S . -B build -G Ninja -DENABLE_EXAMPLES=ON
+      - name: Run clang static analyzer
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          scan-build -analyze-headers -v --status-bugs -o analyzer-reports cmake --build build -v
+      - name: Upload analyzer report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-analyzer-reports
+          path: analyzer-reports
+
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools and clang-tidy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build clang clang-tidy
+      - name: Configure (export compile_commands)
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_EXAMPLES=ON
+      - name: Run clang-tidy on tests/examples
+        run: |
+          python3 - << 'PY'
+import json, subprocess, os
+with open('build/compile_commands.json') as f:
+    cmds = json.load(f)
+files = sorted({entry['file'] for entry in cmds if any(entry['file'].startswith(p) for p in ('tests/', 'examples/'))})
+if not files:
+    # Fallback: run on all files in compile database
+    files = sorted({entry['file'] for entry in cmds})
+args = ['run-clang-tidy', '-p', 'build', '-quiet'] + files
+subprocess.run(args, check=False)
+PY
