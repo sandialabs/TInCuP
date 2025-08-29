@@ -5,6 +5,7 @@
 </div>
 
 [![CI](https://github.com/sandialabs/TInCuP/actions/workflows/ci.yml/badge.svg)](https://github.com/sandialabs/TInCuP/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/sandialabs/TInCuP/badge)](https://securityscorecards.dev/viewer/?uri=github.com/sandialabs/TInCuP)
 [![PyPI](https://img.shields.io/pypi/v/TInCuP.svg)](https://pypi.org/project/TInCuP/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/TInCuP.svg)](https://pypi.org/project/TInCuP/)
 [![CMake](https://img.shields.io/badge/CMake-supported-blue?logo=cmake)](#cmake)
@@ -16,7 +17,7 @@
 [![Clang](https://img.shields.io/badge/Clang-C%2B%2B20-success?logo=llvm)](#supported-compilers)
 [![MSVC](https://img.shields.io/badge/MSVC-C%2B%2B20-blue?logo=visualstudio)](#supported-compilers)
 
-**TInCuP** (Tag Invoked Customization Points) is a modern, header-only C++20 library that solves the **boilerplate problem** in `tag_invoke`-based customization points through comprehensive code generation and verification tools.
+TInCuP helps you add clean, extensible “hooks” to your C++ library. Describe what you want in a simple spec, generate correct code, and get readable compiler messages when something goes wrong.
 
 ## Installation
 
@@ -29,6 +30,16 @@ Troubleshooting CLI on macOS/Linux:
   - Add the line above to your shell profile (e.g., `~/.zshrc` or `~/.bashrc`).
 - Alternatively, use `pipx` to manage CLI tools: `pipx install TInCuP==1.0.0`
 - The module form always works: `python3 -m cpo_tools.cpo_generator --help`.
+
+## Get, Feedback, Contribute
+
+- Obtain:
+  - PyPI: `pip install TInCuP==1.0.0`
+  - Source: `git clone https://github.com/sandialabs/TInCuP.git && cd TInCuP && pip install -e .`
+  - Header-only C++: see [C++ Library Usage](#c-library-usage) and [Integration with Build Systems](#integration-with-build-systems)
+- Feedback (bugs/enhancements): open an issue: https://github.com/sandialabs/TInCuP/issues
+- Security reports: see [SECURITY.md](SECURITY.md)
+- Contribute: read [CONTRIBUTING.md](CONTRIBUTING.md) and follow our [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## Table of Contents
 
@@ -269,7 +280,7 @@ FetchContent_MakeAvailable(tincup)
 target_link_libraries(your_target PRIVATE tincup::tincup)
 ```
 
-See [build_systems/cmake/README.md](build_systems/cmake/README.md) for advanced usage and [docs/BUILD_SYSTEMS.md](docs/BUILD_SYSTEMS.md) for integration details.
+See [Build Systems/cmake/README.md](build_systems/cmake/README.md) for advanced usage and [docs/BUILD_SYSTEMS.md](docs/BUILD_SYSTEMS.md) for integration details.
 
 #### Meson
 See [build_systems/meson/README.md](build_systems/meson/README.md) for detailed Meson integration.
