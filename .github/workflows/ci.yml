@@ -483,13 +483,13 @@ jobs:
       - name: Run clang-tidy on tests/examples
         run: |
           python3 - << 'PY'
-import json, subprocess, os
-with open('build/compile_commands.json') as f:
-    cmds = json.load(f)
-files = sorted({entry['file'] for entry in cmds if any(entry['file'].startswith(p) for p in ('tests/', 'examples/'))})
-if not files:
-    # Fallback: run on all files in compile database
-    files = sorted({entry['file'] for entry in cmds})
-args = ['run-clang-tidy', '-p', 'build', '-quiet'] + files
-subprocess.run(args, check=False)
-PY
+          import json, subprocess, os
+          with open('build/compile_commands.json') as f:
+              cmds = json.load(f)
+          files = sorted({entry['file'] for entry in cmds if any(entry['file'].startswith(p) for p in ('tests/', 'examples/'))})
+          if not files:
+              # Fallback: run on all files in compile database
+              files = sorted({entry['file'] for entry in cmds})
+          args = ['run-clang-tidy', '-p', 'build', '-quiet'] + files
+          subprocess.run(args, check=False)
+          PY
