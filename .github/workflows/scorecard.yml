@@ -1,0 +1,33 @@
+name: OpenSSF Scorecard
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Weekly, Mondays at 00:00 UTC
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  id-token: write
+
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run OpenSSF Scorecard analysis
+        uses: ossf/scorecard-action@v2.3.1
+        with:
+          results_file: scorecard.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: scorecard.sarif
+

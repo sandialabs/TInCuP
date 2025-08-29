@@ -35,10 +35,22 @@ make -f build_systems/make/Makefile verify-cpos # Pattern verification
 
 ## Pull Request Checklist
 
+- Tests are added/updated for new or changed functionality (see Testing Policy)
 - Tests pass locally (or explain any platform-specific constraints)
 - CI is green (or has expected, explained failures)
 - Update docs if behavior or interfaces change
 - Keep changes focused; avoid unrelated refactors in the same PR
+
+## Testing Policy
+
+As major new functionality is added, corresponding automated tests MUST be added to the test suite. Bug fixes SHOULD include a regression test where practical.
+
+- Scope: unit tests for pure logic; integration tests for build systems and editor tooling; smoke tests for cross‑platform toolchains.
+- Location: Python tests live under `tests/*.py`; C++ smoke/unit tests live under `tests/*.cpp` or the build system test folders.
+- Enforcement: PRs that add significant functionality without tests will not be merged absent a clear, documented justification.
+- Evidence: Recent major changes (e.g., generator/verification updates, MSVC support, Meson/CMake smoke tests) include accompanying tests in `tests/` and CI jobs exercising them.
+
+See also: [docs/TESTING_POLICY.md](docs/TESTING_POLICY.md)
 
 ## Code of Conduct
 
@@ -47,4 +59,3 @@ Please review and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 ## Security
 
 If you believe you’ve found a security vulnerability, please follow our [Security Policy](SECURITY.md) and do not open a public issue with sensitive details.
-
