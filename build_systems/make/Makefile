@@ -75,11 +75,11 @@ install-git-hook:
 
 # Local CI testing (mirrors GitHub Actions exactly)
 ci-local:
-	bash run_local_ci.sh
+	bash scripts/run_local_ci.sh
 
 # Quick local testing (faster subset)
 ci-quick:
-	bash run_local_ci.sh --quick
+	bash scripts/run_local_ci.sh --quick
 
 # Individual test categories
 test-python: install-dev

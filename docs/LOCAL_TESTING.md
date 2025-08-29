@@ -7,10 +7,10 @@ This guide explains how to run the complete TInCuP test suite locally, mirroring
 ### Run Complete Local CI Suite
 ```bash
 # Run all tests (mirrors GitHub Actions exactly)
-./run_local_ci.sh
+./scripts/scripts/run_local_ci.sh
 
 # Run quick subset (faster, for development)
-./run_local_ci.sh --quick
+./scripts/scripts/run_local_ci.sh --quick
 
 # Using Make
 make ci-local      # Complete test suite
@@ -117,12 +117,12 @@ Repository: /path/to/tincup
 
 ## Performance
 
-### Full Test Suite (`./run_local_ci.sh`)
+### Full Test Suite (`./scripts/scripts/run_local_ci.sh`)
 - **Time**: ~3-5 minutes
 - **Coverage**: 100% CI parity
 - **Use case**: Before pushing, release preparation
 
-### Quick Test Suite (`./run_local_ci.sh --quick`)  
+### Quick Test Suite (`./scripts/scripts/run_local_ci.sh --quick`)  
 - **Time**: ~1-2 minutes
 - **Coverage**: Core functionality only
 - **Use case**: Development iteration, quick verification
@@ -137,7 +137,7 @@ Repository: /path/to/tincup
 ### Pre-Push Validation
 ```bash
 # Before pushing changes
-./run_local_ci.sh
+./scripts/scripts/run_local_ci.sh
 git push  # Only if local CI passes
 ```
 
@@ -152,9 +152,9 @@ make ci-quick       # Quick overall validation
 ### Debugging CI Failures
 ```bash
 # If CI fails, reproduce locally:
-./run_local_ci.sh   # Should show the same failure
+./scripts/scripts/run_local_ci.sh   # Should show the same failure
 # Fix the issue
-./run_local_ci.sh   # Verify fix works
+./scripts/scripts/run_local_ci.sh   # Verify fix works
 git push            # CI should now pass
 ```
 
@@ -163,22 +163,22 @@ git push            # CI should now pass
 ### Environment Variables
 ```bash
 # Test with specific compiler
-CC=clang CXX=clang++ ./run_local_ci.sh
+CC=clang CXX=clang++ ./scripts/scripts/run_local_ci.sh
 
 # Skip time-consuming tests
-SKIP_SLOW_TESTS=1 ./run_local_ci.sh
+SKIP_SLOW_TESTS=1 ./scripts/scripts/run_local_ci.sh
 ```
 
 ### Custom Build Directory
 ```bash
 # Use custom build location
-BUILD_DIR=/tmp/tincup_test ./run_local_ci.sh
+BUILD_DIR=/tmp/tincup_test ./scripts/scripts/run_local_ci.sh
 ```
 
 ### Verbose Output
 All test scripts support detailed output for debugging:
 ```bash
-./run_local_ci.sh --verbose
+./scripts/scripts/run_local_ci.sh --verbose
 make test-cmake V=1
 ```
 
@@ -190,7 +190,7 @@ make test-cmake V=1
 
 ### "Permission denied" Errors  
 - **Issue**: Script not executable
-- **Solution**: `chmod +x run_local_ci.sh`
+- **Solution**: `chmod +x scripts/run_local_ci.sh`
 
 ### Python Import Errors
 - **Issue**: TInCuP not installed

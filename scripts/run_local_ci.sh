@@ -13,7 +13,8 @@ NC='\033[0m' # No Color
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-BUILD_DIR="$SCRIPT_DIR/local_ci_build"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." &> /dev/null && pwd)"
+BUILD_DIR="$PROJECT_ROOT/local_ci_build"
 COMPILERS=("gcc" "clang")
 # We'll auto-discover available Python versions (3.8–3.12) below
 PYTHON_VERSIONS=()
@@ -123,12 +124,13 @@ run_python_tests() {
         # shellcheck source=/dev/null
         source "$venv_dir/bin/activate"
         python -m pip install --upgrade pip >/dev/null
-        pip install -e . >/dev/null
-        if [ -f "tests/requirements.txt" ]; then
-            pip install -r tests/requirements.txt >/dev/null
+        pip install -e "$PROJECT_ROOT" >/dev/null
+        if [ -f "$PROJECT_ROOT/tests/requirements.txt" ]; then
+            pip install -r "$PROJECT_ROOT/tests/requirements.txt" >/dev/null
         fi
 
         log_info "Running tests with $(python --version 2>&1)"
+        cd "$PROJECT_ROOT"
         python tests/run_tests.py --verbose
 
         # Also run the pattern verification wrapper similar to CI (non-fatal)
@@ -160,6 +162,7 @@ test_cmake_compiler() {
     fi
     
     # Configure and build main project
+    cd "$PROJECT_ROOT"
     cmake -S . -B "$cmake_build_dir"
     cmake --build "$cmake_build_dir"
     
@@ -173,7 +176,7 @@ test_cmake_compiler() {
     cat > "$smoke_dir/CMakeLists.txt" << EOF
 cmake_minimum_required(VERSION 3.20)
 project(tincup_smoke CXX)
-add_subdirectory($SCRIPT_DIR/build_systems/cmake \${CMAKE_BINARY_DIR}/tincup)
+add_subdirectory($PROJECT_ROOT/build_systems/cmake \${CMAKE_BINARY_DIR}/tincup)
 add_executable(smoke main.cpp)
 target_link_libraries(smoke PRIVATE tincup::tincup)
 EOF
@@ -210,6 +213,7 @@ test_meson_compiler() {
     fi
     
     # Configure and build main project
+    cd "$PROJECT_ROOT"
     meson setup "$meson_build_dir" build_systems/meson -Denable_examples=true
     meson compile -C "$meson_build_dir"
     
@@ -233,7 +237,7 @@ int main() { return 0; }
 EOF
     
     # Link the Meson subproject
-    ln -s "$SCRIPT_DIR/build_systems/meson" "$smoke_dir/subprojects/tincup"
+    ln -s "$PROJECT_ROOT/build_systems/meson" "$smoke_dir/subprojects/tincup"
     
     meson setup "$smoke_dir/build" "$smoke_dir"
     meson compile -C "$smoke_dir/build" -v
@@ -266,25 +270,26 @@ run_editor_integration_tests() {
     log_section "Editor Integration Tests"
     
     # Install Python tooling (needed for editor tests)
+    cd "$PROJECT_ROOT"
     python3 -m pip install --upgrade pip
     pip install -e .
     
     # Run editor integration tests
-    if [ -f "tests/vim_integration_test.sh" ]; then
+    if [ -f "$PROJECT_ROOT/tests/vim_integration_test.sh" ]; then
         log_info "Running Vim integration tests..."
-        bash tests/vim_integration_test.sh
+        bash "$PROJECT_ROOT/tests/vim_integration_test.sh"
         log_success "Vim integration tests passed"
     fi
     
-    if [ -f "tests/vscode_config_check.sh" ]; then
+    if [ -f "$PROJECT_ROOT/tests/vscode_config_check.sh" ]; then
         log_info "Running VSCode configuration tests..."
-        bash tests/vscode_config_check.sh
+        bash "$PROJECT_ROOT/tests/vscode_config_check.sh"
         log_success "VSCode configuration tests passed"
     fi
     
-    if [ -f "tests/clion_integration_test.sh" ]; then
+    if [ -f "$PROJECT_ROOT/tests/clion_integration_test.sh" ]; then
         log_info "Running CLion integration tests..."
-        bash tests/clion_integration_test.sh
+        bash "$PROJECT_ROOT/tests/clion_integration_test.sh"
         log_success "CLion integration tests passed"
     fi
     
@@ -294,6 +299,8 @@ run_editor_integration_tests() {
 # Test examples (if they exist)
 run_example_tests() {
     log_section "Example Tests"
+    
+    cd "$PROJECT_ROOT"
     
     # Test serialize example
     if [ -f "examples/serialize/test_serialization.cpp" ]; then
@@ -388,7 +395,7 @@ print_summary() {
 main() {
     log_section "TInCuP Local CI Test Suite"
     echo "This script mirrors the GitHub Actions CI pipeline locally"
-    echo "Repository: $(pwd)"
+    echo "Repository: $PROJECT_ROOT"
     echo ""
     
     check_prerequisites

@@ -1104,10 +1104,10 @@ Notes:
 
 ```bash
 # Run complete local CI suite (mirrors GitHub Actions exactly)
-./run_local_ci.sh
+./scripts/run_local_ci.sh
 
 # Quick development testing (faster subset)
-./run_local_ci.sh --quick
+./scripts/run_local_ci.sh --quick
 
 # Individual test categories  
 make test-cmake     # Test CMake build
@@ -1127,7 +1127,7 @@ See **[docs/LOCAL_TESTING.md](docs/LOCAL_TESTING.md)** for complete guide.
 ## Contributing
 
 1. **Development setup**: `make -f build_systems/make/Makefile install-dev`
-2. **Test locally**: `./run_local_ci.sh` ← **Run this before every push**
+2. **Test locally**: `./scripts/run_local_ci.sh` ← **Run this before every push**
 3. **Run Python tests**: `make -f build_systems/make/Makefile test`  
 4. **Verify patterns**: `make -f build_systems/make/Makefile verify-cpos`
 

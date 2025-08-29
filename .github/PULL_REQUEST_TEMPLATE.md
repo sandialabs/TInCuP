@@ -12,7 +12,7 @@ Describe the change and motivation.
 ## Testing
 
 - [ ] Added/updated tests for new/changed functionality (see Testing Policy)
-- [ ] Ran local CI: `./run_local_ci.sh` (or quick mode)
+- [ ] Ran local CI: `./scripts/run_local_ci.sh` (or quick mode)
 - [ ] Verified cross‑platform impact where relevant (GCC/Clang/MSVC)
 
 ## Checklist

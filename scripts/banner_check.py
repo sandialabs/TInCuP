@@ -13,6 +13,7 @@ import sys
 import re
 from pathlib import Path
 from typing import List, Tuple, Optional
+import fnmatch
 
 # Default banner text embedded from BANNER.txt
 BANNER_TEXT = (
@@ -37,6 +38,7 @@ class BannerChecker:
         self.python_extensions = {'.py'}
         self.cmake_files = {'CMakeLists.txt'}
         self.cmake_extensions = {'.cmake'}
+        self.gitignore_patterns = self._load_gitignore()
         
     def _load_banner(self, banner_file: Optional[str], banner_text: Optional[str]) -> str:
         """Resolve banner text from explicit value, file, or built-in default."""
@@ -51,6 +53,48 @@ class BannerChecker:
             except Exception as e:
                 print(f"Warning: Error reading {banner_file}: {e}. Falling back to embedded banner text.")
         return BANNER_TEXT.strip()
+    
+    def _load_gitignore(self) -> List[str]:
+        """Load patterns from .gitignore file if it exists."""
+        gitignore_path = Path(".gitignore")
+        patterns = []
+        if gitignore_path.exists():
+            try:
+                with open(gitignore_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#'):
+                            patterns.append(line)
+            except Exception as e:
+                print(f"Warning: Error reading .gitignore: {e}")
+        return patterns
+    
+    def _is_ignored(self, file_path: Path, root_dir: Path) -> bool:
+        """Check if a file should be ignored based on .gitignore patterns."""
+        # Get relative path from root directory
+        try:
+            relative_path = file_path.relative_to(root_dir)
+        except ValueError:
+            # Path is not relative to root_dir, don't ignore
+            return False
+        
+        path_str = str(relative_path)
+        path_parts = relative_path.parts
+        
+        for pattern in self.gitignore_patterns:
+            # Handle directory patterns (ending with /)
+            if pattern.endswith('/'):
+                dir_pattern = pattern[:-1]
+                if any(fnmatch.fnmatch(part, dir_pattern) for part in path_parts):
+                    return True
+            # Handle file patterns
+            elif fnmatch.fnmatch(path_str, pattern) or fnmatch.fnmatch(file_path.name, pattern):
+                return True
+            # Handle patterns that match directory components
+            elif any(fnmatch.fnmatch(part, pattern) for part in path_parts):
+                return True
+        
+        return False
     
     def _get_cpp_banner_pattern(self) -> str:
         """Generate the expected C++ banner pattern"""
@@ -138,7 +182,9 @@ class BannerChecker:
         root_path = Path(root_dir)
         
         for file_path in root_path.rglob("*"):
-            if file_path.is_file() and self._should_check_file(file_path):
+            if (file_path.is_file() and 
+                self._should_check_file(file_path) and 
+                not self._is_ignored(file_path, root_path)):
                 if self.check_file(file_path):
                     compliant_files.append(file_path)
                 else:

@@ -22,8 +22,8 @@ Thanks for your interest in contributing! This guide will help you get set up.
 Run the local CI mirror before pushing:
 
 ```bash
-./run_local_ci.sh         # full suite
-./run_local_ci.sh --quick # faster subset
+./scripts/run_local_ci.sh         # full suite
+./scripts/run_local_ci.sh --quick # faster subset
 ```
 
 Or individual targets:
