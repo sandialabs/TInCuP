@@ -1,0 +1,156 @@
+name: DCO Check
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dco-check:
+    name: Check DCO Sign-off
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          
+      - name: Check DCO sign-offs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          
+          # Get commits in this PR
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          
+          echo "Checking DCO sign-offs for commits from ${BASE_SHA} to ${HEAD_SHA}"
+          
+          # Get list of commits in the PR
+          COMMITS=$(git rev-list --reverse "${BASE_SHA}..${HEAD_SHA}")
+          
+          if [ -z "$COMMITS" ]; then
+            echo "No commits to check"
+            exit 0
+          fi
+          
+          UNSIGNED_COMMITS=()
+          TOTAL_COMMITS=0
+          
+          for commit in $COMMITS; do
+            TOTAL_COMMITS=$((TOTAL_COMMITS + 1))
+            
+            # Get commit message
+            COMMIT_MSG=$(git log -1 --format='%B' "$commit")
+            AUTHOR=$(git log -1 --format='%an <%ae>' "$commit")
+            COMMITTER=$(git log -1 --format='%cn <%ce>' "$commit")
+            SHORT_SHA=${commit:0:7}
+            SUBJECT=$(git log -1 --format='%s' "$commit")
+            
+            echo "Checking commit $SHORT_SHA: $SUBJECT"
+            
+            # Check for DCO sign-off line
+            if echo "$COMMIT_MSG" | grep -q "^Signed-off-by: "; then
+              # Extract the sign-off line
+              SIGNOFF=$(echo "$COMMIT_MSG" | grep "^Signed-off-by: " | tail -1)
+              echo "✅ Found DCO sign-off: $SIGNOFF"
+              
+              # Optional: Verify sign-off matches author or committer
+              SIGNOFF_EMAIL=$(echo "$SIGNOFF" | sed 's/.*<\(.*\)>.*/\1/')
+              AUTHOR_EMAIL=$(echo "$AUTHOR" | sed 's/.*<\(.*\)>.*/\1/')
+              COMMITTER_EMAIL=$(echo "$COMMITTER" | sed 's/.*<\(.*\)>.*/\1/')
+              
+              if [ "$SIGNOFF_EMAIL" = "$AUTHOR_EMAIL" ] || [ "$SIGNOFF_EMAIL" = "$COMMITTER_EMAIL" ]; then
+                echo "   Email matches author/committer ✅"
+              else
+                echo "   ⚠️  Sign-off email ($SIGNOFF_EMAIL) doesn't match author ($AUTHOR_EMAIL) or committer ($COMMITTER_EMAIL)"
+                echo "   This is still valid if the signer has authority to contribute this code"
+              fi
+            else
+              echo "❌ Missing DCO sign-off in commit $SHORT_SHA"
+              UNSIGNED_COMMITS+=("$commit")
+            fi
+          done
+          
+          echo ""
+          echo "Checked $TOTAL_COMMITS commits"
+          
+          if [ ${#UNSIGNED_COMMITS[@]} -eq 0 ]; then
+            echo "✅ All commits have proper DCO sign-offs!"
+            exit 0
+          else
+            echo "❌ Found ${#UNSIGNED_COMMITS[@]} commits without DCO sign-off:"
+            for commit in "${UNSIGNED_COMMITS[@]}"; do
+              SHORT_SHA=${commit:0:7}
+              SUBJECT=$(git log -1 --format='%s' "$commit")
+              AUTHOR=$(git log -1 --format='%an' "$commit")
+              echo "  - $SHORT_SHA: $SUBJECT (by $AUTHOR)"
+            done
+            
+            echo ""
+            echo "🖊️  All commits must include a DCO sign-off."
+            echo "📋 To fix this:"
+            echo "1. For new commits: git commit -s -m 'Your message'"
+            echo "2. To add DCO to the last commit: git commit --amend -s --no-edit"
+            echo "3. For multiple commits, rebase and add sign-offs:"
+            echo "   git rebase --exec 'git commit --amend --no-edit -s' HEAD~n"
+            echo "4. Then force push: git push --force-with-lease"
+            echo ""
+            echo "The DCO sign-off certifies that you have the right to contribute this code."
+            echo "See: https://developercertificate.org/"
+            
+            exit 1
+          fi
+
+      - name: Post PR comment on missing DCO
+        if: failure()
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const comment = `## 🖊️ DCO Sign-off Required
+            
+            This pull request contains commits that are missing the Developer Certificate of Origin (DCO) sign-off.
+            
+            **All commits must include a DCO sign-off for legal compliance.**
+            
+            ### What is DCO?
+            The [Developer Certificate of Origin](https://developercertificate.org/) is a lightweight way for contributors to certify that they wrote or have the right to contribute the code they are submitting.
+            
+            ### How to fix:
+            
+            **For new commits:**
+            \`\`\`bash
+            git commit -s -m "Your commit message"
+            \`\`\`
+            
+            **To add DCO to your last commit:**
+            \`\`\`bash
+            git commit --amend -s --no-edit
+            git push --force-with-lease
+            \`\`\`
+            
+            **To add DCO to multiple commits:**
+            \`\`\`bash
+            # Replace 'n' with the number of commits to fix
+            git rebase --exec 'git commit --amend --no-edit -s' HEAD~n
+            git push --force-with-lease
+            \`\`\`
+            
+            **Configure git to always sign-off:**
+            \`\`\`bash
+            git config --global format.signoff true
+            \`\`\`
+            
+            ❌ **This PR will be blocked until all commits are signed off.**`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
