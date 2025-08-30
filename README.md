@@ -34,7 +34,7 @@ TInCuP helps you add clean, extensible “hooks” to your C++ library. Describe
 
 Well, that's essentially the same problem, AKA "The Library Design Problem." It's technically only a *two* body 
 problem, but you are asking for `ImpressiveLib` to be generic and allow non-intrusive customization. This
-is what [`std::ranges`](https://en.cppreference.com/w/cpp/ranges.html) does, and customization point objects are 
+is what [`std::ranges`](https://en.cppreference.com/w/cpp/ranges.html) does and customization point objects are 
 how it does it.    
 
 
