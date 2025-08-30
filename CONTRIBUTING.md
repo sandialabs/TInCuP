@@ -30,6 +30,14 @@ This script automatically:
 2. 🏷️ **Verifies copyright banners** on all source files  
 3. 🔧 **Runs complete local CI** (mirrors GitHub Actions exactly)
 
+You can run the pre-commit hook to have `git` automatically run `scripts/checkin.sh` 
+before commits or pushes. 
+
+```bash
+./scripts/setup-git-hooks.sh
+```
+
+
 **Alternative: Individual steps**
 
 ```bash
