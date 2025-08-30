@@ -257,11 +257,26 @@ Consider: add_assign(*vec_ptr, other_vec)
 
 ## C++ Library Usage
 
-This is a header-only library. To use it, simply include the single header:
+This is a header-only library. You can use it in two ways:
 
+### Option 1: Multi-Header (Default)
 ```cpp
 #include <tincup/tincup.hpp>
 ```
+
+### Option 2: Single Header (Convenience)
+For easier distribution or simple integration, use the single header version:
+
+```cpp
+#include "single_include/tincup.hpp"  // All functionality in one file
+```
+
+The single header is automatically generated from the multi-header version and contains:
+- All TInCuP functionality consolidated into one file
+- Proper copyright banners and organized includes
+- Same API and performance as the multi-header version
+
+Generate the latest single header: `cd scripts && python generate_single_header.py`
 
 ## Quick Start
 
@@ -1134,10 +1149,28 @@ See **[docs/LOCAL_TESTING.md](docs/LOCAL_TESTING.md)** for complete guide.
 
 ## Contributing
 
-1. **Development setup**: `make -f build_systems/make/Makefile install-dev`
-2. **Test locally**: `./scripts/run_local_ci.sh` ← **Run this before every push**
-3. **Run Python tests**: `make -f build_systems/make/Makefile test`  
-4. **Verify patterns**: `make -f build_systems/make/Makefile verify-cpos`
+**🚀 Quick development workflow:**
+```bash
+# Development setup
+make -f build_systems/make/Makefile install-dev
+
+# Before every commit - runs all checks automatically  
+./scripts/checkin.sh  ← **Use this for automated pre-commit verification**
+
+# Alternative: individual steps
+./scripts/run_local_ci.sh  # Complete local CI testing
+make -f build_systems/make/Makefile test        # Python tests only
+make -f build_systems/make/Makefile verify-cpos # Verify CPO patterns
+```
+
+The `checkin.sh` script automatically:
+1. 📦 **Generates the single header** (`single_include/tincup.hpp`)
+2. 🏷️ **Verifies copyright banners** on all source files  
+3. 🔧 **Runs complete local CI** (mirrors GitHub Actions exactly)
+
+This ensures your changes are ready for commit and won't break CI.
+
+For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

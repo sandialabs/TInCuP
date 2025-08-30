@@ -19,27 +19,54 @@ Thanks for your interest in contributing! This guide will help you get set up.
 
 ## Validate Changes Locally
 
-Run the local CI mirror before pushing:
+**🚀 Recommended: Use the automated pre-checkin script**
 
 ```bash
-./scripts/run_local_ci.sh         # full suite
-./scripts/run_local_ci.sh --quick # faster subset
+./scripts/checkin.sh  # Runs all validation automatically
 ```
 
-Or individual targets:
+This script automatically:
+1. 📦 **Generates the single header** (`single_include/tincup.hpp`)
+2. 🏷️ **Verifies copyright banners** on all source files  
+3. 🔧 **Runs complete local CI** (mirrors GitHub Actions exactly)
+
+**Alternative: Individual steps**
 
 ```bash
+./scripts/run_local_ci.sh         # full CI suite
+./scripts/run_local_ci.sh --quick # faster subset
+
+# Individual targets
 make -f build_systems/make/Makefile test        # Python tests
 make -f build_systems/make/Makefile verify-cpos # Pattern verification
+
+# Single header maintenance
+cd scripts && python generate_single_header.py  # Regenerate single header
+
+# Copyright banner checking
+python scripts/banner_check.py --fix           # Auto-fix missing banners
 ```
 
 ## Pull Request Checklist
 
-- Tests are added/updated for new or changed functionality (see Testing Policy)
-- Tests pass locally (or explain any platform-specific constraints)
-- CI is green (or has expected, explained failures)
-- Update docs if behavior or interfaces change
-- Keep changes focused; avoid unrelated refactors in the same PR
+- **Run pre-checkin validation**: `./scripts/checkin.sh` passes without errors
+- **Single header updated**: Automatically generated (don't edit `single_include/tincup.hpp` directly)
+- **Copyright banners**: Present on all new source files (auto-fixed by checkin script)
+- **Tests added/updated**: For new or changed functionality (see Testing Policy)
+- **Tests pass locally**: Or explain any platform-specific constraints
+- **CI is green**: Or has expected, explained failures
+- **Documentation updated**: If behavior or interfaces change
+- **Focused changes**: Avoid unrelated refactors in the same PR
+
+## Single Header Maintenance
+
+The `single_include/tincup.hpp` file is **automatically generated** - never edit it directly!
+
+- **Purpose**: Provides nlohmann::json-style single-file distribution
+- **Generation**: `cd scripts && python generate_single_header.py`
+- **Features**: Same API as multi-header, optimized includes, proper copyright banners
+- **Testing**: `tests/test_single_header.cpp` verifies functionality
+- **Automation**: The `checkin.sh` script regenerates it automatically
 
 ## Testing Policy
 
