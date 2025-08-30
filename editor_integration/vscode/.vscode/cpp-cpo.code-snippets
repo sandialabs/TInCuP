@@ -1,0 +1,130 @@
+{
+    "CPO JSON Spec - Generic Binary": {
+        "scope": "json,jsonc",
+        "prefix": ["cpo-generic-binary", "cpo-gb"],
+        "body": [
+            "{",
+            "  \"cpo_name\": \"${1:my_binary_cpo}\",",
+            "  \"args\": [\"\\$${2:T}&: ${3:target}\", \"\\$const ${4:U}&: ${5:source}\"]",
+            "}"
+        ],
+        "description": "Generic binary CPO JSON specification"
+    },
+    
+    "CPO JSON Spec - Generic Unary": {
+        "scope": "json,jsonc",
+        "prefix": ["cpo-generic-unary", "cpo-gu"],
+        "body": [
+            "{",
+            "  \"cpo_name\": \"${1:my_unary_cpo}\",",
+            "  \"args\": [\"\\$const ${2:T}&: ${3:input}\"]",
+            "}"
+        ],
+        "description": "Generic unary CPO JSON specification"
+    },
+    
+    "CPO JSON Spec - Forwarding Reference": {
+        "scope": "json,jsonc", 
+        "prefix": ["cpo-forwarding", "cpo-fwd"],
+        "body": [
+            "{",
+            "  \"cpo_name\": \"${1:my_forwarding_cpo}\",",
+            "  \"args\": [\"\\$${2:T}&&: ${3:fwd_ref}\"]",
+            "}"
+        ],
+        "description": "Forwarding reference CPO JSON specification"
+    },
+    
+    "CPO JSON Spec - Variadic": {
+        "scope": "json,jsonc",
+        "prefix": ["cpo-variadic", "cpo-var"],
+        "body": [
+            "{",
+            "  \"cpo_name\": \"${1:my_variadic_cpo}\",",
+            "  \"args\": [\"\\$${2:T}&...: ${3:variadic_args}\"]",
+            "}"
+        ],
+        "description": "Variadic CPO JSON specification"
+    },
+    
+    "CPO JSON Spec - Concrete": {
+        "scope": "json,jsonc",
+        "prefix": ["cpo-concrete", "cpo-con"],
+        "body": [
+            "{",
+            "  \"cpo_name\": \"${1:my_concrete_cpo}\",",
+            "  \"args\": [\"${2:int}&: ${3:target}\", \"const ${4:double}&: ${5:source}\"]",
+            "}"
+        ],
+        "description": "Concrete type CPO JSON specification"
+    },
+    
+    "CPO JSON Spec - LLM Mode": {
+        "scope": "json,jsonc",
+        "prefix": ["cpo-llm", "cpo-semantic"],
+        "body": [
+            "{",
+            "  \"cpo_name\": \"${1:my_semantic_cpo}\",",
+            "  \"operation_type\": \"${2|mutating_binary,scalar_mutating,unary_mutating,binary_query,unary_query,generator,binary_transform|}\",",
+            "  \"doxygen\": ${3:true}",
+            "}"
+        ],
+        "description": "LLM mode semantic CPO specification"
+    },
+    
+    "CPO Manual Implementation": {
+        "scope": "cpp",
+        "prefix": ["cpo-manual", "cpo-impl"],
+        "body": [
+            "inline constexpr struct ${1:my_cpo}_ftor final : cpo_base<${1:my_cpo}_ftor> {",
+            "  TINCUP_CPO_TAG(\"${1:my_cpo}\")",
+            "",
+            "  template<${2:typename T}>",
+            "    requires tag_invocable_c<${1:my_cpo}_ftor, ${3:T&}>",
+            "    constexpr auto operator()(${4:T& target}) const",
+            "    noexcept(nothrow_tag_invocable_c<${1:my_cpo}_ftor, ${3:T&}>) -> tag_invocable_t<${1:my_cpo}_ftor, ${3:T&}> {",
+            "      return tag_invoke(*this, ${5:target});",
+            "    }",
+            "",
+            "  template<${2:typename T}>",
+            "    requires (!tag_invocable_c<${1:my_cpo}_ftor, ${3:T&}>)",
+            "    constexpr void operator()(${4:T& target}) const {",
+            "      this->fail(${5:target});",
+            "    }",
+            "} ${1:my_cpo};",
+            "",
+            "// Readable aliases for ${1:my_cpo} (for external use)",
+            "template<${2:typename T}>",
+            "concept ${1:my_cpo}_invocable_c = tag_invocable_c<${1:my_cpo}_ftor, ${3:T&}>;",
+            "",
+            "template<${2:typename T}>",
+            "concept ${1:my_cpo}_nothrow_invocable_c = nothrow_tag_invocable_c<${1:my_cpo}_ftor, ${3:T&}>;",
+            "",
+            "template<${2:typename T}>",
+            "using ${1:my_cpo}_return_t = typename ${1:my_cpo}_ftor::template return_type<${3:T&}>;"
+        ],
+        "description": "Manual CPO implementation template"
+    },
+    
+    "Tag Invoke Implementation": {
+        "scope": "cpp",
+        "prefix": ["tag-invoke", "tag-impl"],
+        "body": [
+            "template<${1:typename T}>",
+            "constexpr auto tag_invoke(${2:my_cpo}_ftor, ${3:T& target}) {",
+            "    ${4:// TODO: Implement your logic here}",
+            "    $0",
+            "}"
+        ],
+        "description": "Tag invoke implementation template"
+    },
+    
+    "CPO Command Generator": {
+        "scope": "shellscript,bash",
+        "prefix": ["cpo-cmd", "generate-cpo"],
+        "body": [
+            "cpo-generator '{\"cpo_name\": \"${1:my_cpo}\", \"args\": [\"\\$${2:T}&: ${3:target}\"]}' ${4:--doxygen}"
+        ],
+        "description": "Command line CPO generator"
+    }
+}

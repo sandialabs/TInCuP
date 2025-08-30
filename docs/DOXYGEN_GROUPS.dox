@@ -1,0 +1,5 @@
+/** \defgroup tincup_cpos TInCuP Customization Points
+ *  Group of all customization point objects generated or authored with TInCuP.
+ *  Each CPO header should tag its documentation with \ingroup tincup_cpos.
+ */
+

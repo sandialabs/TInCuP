@@ -1,0 +1,51 @@
+[project]
+name = "TInCuP"
+version = "1.0.3"
+description = "Library for Python generation of C++ customization point objects with tag_invoke" 
+requires-python = ">=3.8"
+dependencies = [
+    "jinja2",
+    "click>=8.0",  # For better CLI interfaces
+    "colorama>=0.4",  # For colored output
+    "pyyaml>=6.0",  # For configuration files
+]
+license = {file = 'LICENSE'}
+readme = "README.md"
+authors = [{name = "Greg von Winckel", email = "gvonwin@sandia.gov"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Libraries :: Python Modules", 
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9", 
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent"
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+cpo-generator = "cpo_tools.cpo_generator:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black>=22.0",
+    "mypy>=0.990",
+]
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cpo_tools*"]
+
+[tool.setuptools.package-data]
+cpo_tools = ["templates/*", "templates/**/*"]

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CLion Live Templates for TInCuP CPO Generation -->
+<!-- Import this file via File -> Settings -> Editor -> Live Templates -> Import -->
+<templateSet group="TInCuP CPO">
+  <template name="cpo-generic-unary" value="inline constexpr struct $NAME$_ftor final : cpo_base&lt;$NAME$_ftor&gt; {&#10;  TINCUP_CPO_TAG(&quot;$NAME$&quot;)&#10;&#10;  template&lt;typename T&gt;&#10;    requires tag_invocable_c&lt;$NAME$_ftor, T&amp;&gt;&#10;    constexpr auto operator()(T&amp; $ARG$) const&#10;    noexcept(nothrow_tag_invocable_c&lt;$NAME$_ftor, T&amp;&gt;) -&gt; tag_invocable_t&lt;$NAME$_ftor, T&amp;&gt; {&#10;      return tag_invoke(*this, $ARG$);&#10;    }&#10;&#10;  template&lt;typename T&gt;&#10;    requires (!tag_invocable_c&lt;$NAME$_ftor, T&amp;&gt;)&#10;    constexpr void operator()(T&amp; $ARG$) const {&#10;      this-&gt;fail($ARG$);&#10;    }&#10;} $NAME$;" description="Generic unary CPO template" toReformat="true" toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="&quot;my_cpo&quot;" alwaysStopAt="true" />
+    <variable name="ARG" expression="" defaultValue="&quot;arg&quot;" alwaysStopAt="true" />
+    <context>
+      <option name="CPP" value="true" />
+      <option name="CPP_DECLARATION" value="true" />
+      <option name="CPP_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template name="cpo-generic-binary" value="inline constexpr struct $NAME$_ftor final : cpo_base&lt;$NAME$_ftor&gt; {&#10;  TINCUP_CPO_TAG(&quot;$NAME$&quot;)&#10;&#10;  template&lt;typename T, typename U&gt;&#10;    requires tag_invocable_c&lt;$NAME$_ftor, T&amp;, const U&amp;&gt;&#10;    constexpr auto operator()(T&amp; $ARG1$, const U&amp; $ARG2$) const&#10;    noexcept(nothrow_tag_invocable_c&lt;$NAME$_ftor, T&amp;, const U&amp;&gt;) -&gt; tag_invocable_t&lt;$NAME$_ftor, T&amp;, const U&amp;&gt; {&#10;      return tag_invoke(*this, $ARG1$, $ARG2$);&#10;    }&#10;&#10;  template&lt;typename T, typename U&gt;&#10;    requires (!tag_invocable_c&lt;$NAME$_ftor, T&amp;, const U&amp;&gt;)&#10;    constexpr void operator()(T&amp; $ARG1$, const U&amp; $ARG2$) const {&#10;      this-&gt;fail($ARG1$, $ARG2$);&#10;    }&#10;} $NAME$;" description="Generic binary CPO template" toReformat="true" toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="&quot;my_cpo&quot;" alwaysStopAt="true" />
+    <variable name="ARG1" expression="" defaultValue="&quot;target&quot;" alwaysStopAt="true" />
+    <variable name="ARG2" expression="" defaultValue="&quot;source&quot;" alwaysStopAt="true" />
+    <context>
+      <option name="CPP" value="true" />
+      <option name="CPP_DECLARATION" value="true" />
+      <option name="CPP_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template name="tag-invoke-impl" value="constexpr auto tag_invoke($CPO$_ftor, $PARAMS$) noexcept -&gt; $RETURN_TYPE$ {&#10;  $BODY$&#10;}" description="tag_invoke implementation template" toReformat="true" toShortenFQNames="true">
+    <variable name="CPO" expression="" defaultValue="&quot;my_cpo&quot;" alwaysStopAt="true" />
+    <variable name="PARAMS" expression="" defaultValue="&quot;auto&amp;&amp; arg&quot;" alwaysStopAt="true" />
+    <variable name="RETURN_TYPE" expression="" defaultValue="&quot;void&quot;" alwaysStopAt="true" />
+    <variable name="BODY" expression="" defaultValue="&quot;// TODO: Implement&quot;" alwaysStopAt="true" />
+    <context>
+      <option name="CPP" value="true" />
+      <option name="CPP_DECLARATION" value="true" />
+      <option name="CPP_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template name="cpo-include" value="#include &lt;tincup/tincup.hpp&gt;&#10;&#10;using namespace tincup;" description="TInCuP include with using directive" toReformat="false" toShortenFQNames="false">
+    <context>
+      <option name="CPP" value="true" />
+      <option name="CPP_DECLARATION" value="true" />
+      <option name="CPP_FILE" value="true" />
+    </context>
+  </template>
+</templateSet>

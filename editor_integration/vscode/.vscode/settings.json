@@ -1,0 +1,48 @@
+{
+    // CPO-specific settings
+    "files.associations": {
+        "*.jinja2": "jinja",
+        "*.hpp.jinja2": "cpp"
+    },
+    
+    // Python settings for CPO tools
+    "python.defaultInterpreterPath": "python3",
+    "python.testing.unittestEnabled": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./cpo_tools",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.cwd": "${workspaceFolder}",
+    
+    // C++ settings
+    "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.default.intelliSenseMode": "gcc-x64",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/include"
+    ],
+    
+    // Editor settings for better CPO development
+    "editor.rulers": [100],
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    
+    // File watching for CPO verification
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/__pycache__/**": true,
+        "**/*.pyc": true
+    },
+    
+    // Task configuration
+    "task.autoDetect": "on",
+    "task.showDecorations": true,
+    
+    // Snippets
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.tabCompletion": "on"
+}

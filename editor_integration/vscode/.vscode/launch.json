@@ -1,0 +1,59 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug CPO Generator",
+            "type": "python",
+            "request": "launch",
+            "module": "cpo_tools.cpo_generator",
+            "args": ["${input:cpoSpec}"],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "purpose": ["debug-test"]
+        },
+        {
+            "name": "Debug CPO Verification",
+            "type": "python", 
+            "request": "launch",
+            "module": "cpo_tools.cpo_verification",
+            "args": ["${file}"],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "purpose": ["debug-test"]
+        },
+        {
+            "name": "Run CPO Tests",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_tests.py",
+            "args": ["--verbose"],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "purpose": ["debug-test"]
+        },
+        {
+            "name": "Debug Specific Test",
+            "type": "python",
+            "request": "launch",
+            "module": "unittest",
+            "args": ["${input:testName}", "-v"],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "purpose": ["debug-test"]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "cpoSpec",
+            "description": "CPO JSON Specification",
+            "default": "{\"cpo_name\": \"test_cpo\", \"args\": [\"$T&: target\"]}",
+            "type": "promptString"
+        },
+        {
+            "id": "testName", 
+            "description": "Test name (e.g., cpo_tools.test_cpo_patterns.ConcreteTypePatternTests.test_concrete_by_value)",
+            "default": "cpo_tools.test_cpo_patterns",
+            "type": "promptString"
+        }
+    ]
+}

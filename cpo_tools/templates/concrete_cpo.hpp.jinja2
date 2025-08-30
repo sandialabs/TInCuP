@@ -1,0 +1,14 @@
+{% from 'macros/helpers.jinja2' import cpo_type_aliases %}
+{% from 'macros/dispatch.jinja2' import typed_operator_overloads %}
+
+[[deprecated("CPO with all concrete types - consider using regular function instead. Intended for experimentation/testing only.")]]
+inline constexpr struct {{ cpo_name }}_ftor final : tincup::cpo_base<{{ cpo_name }}_ftor> {
+  TINCUP_CPO_TAG("{{ cpo_name }}")
+  inline static constexpr bool is_variadic = {{ 'true' if has_variadic else 'false' }};
+
+{{ typed_operator_overloads(cpo_name, "", arg_pairs, arg_names, concept_types, canonical_concept_args) }}
+} {{ cpo_name }};
+
+// Note: operator() methods are provided by cpo_base
+
+{{ cpo_type_aliases(cpo_name, "", concept_types, semantic_info, canonical_concept_args) }}

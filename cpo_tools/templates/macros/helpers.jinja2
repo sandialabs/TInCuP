@@ -1,0 +1,42 @@
+
+{% macro cpo_type_aliases(cpo_name, arg_types, concept_types, semantic_info, canonical_concept_args) %}
+{%- if arg_types %}
+// CPO-specific concepts and type aliases for convenient usage
+template<{{ arg_types }}>
+concept {{ cpo_name }}_invocable_c = tincup::invocable_c<{{ canonical_concept_args }}>;
+
+template<{{ arg_types }}>
+concept {{ cpo_name }}_nothrow_invocable_c = tincup::nothrow_invocable_c<{{ canonical_concept_args }}>;
+
+{% if semantic_info %}
+// Enhanced semantic concept with meaningful requirements
+template<{{ arg_types }}>
+concept {{ cpo_name }}_c = {{ cpo_name }}_invocable_c<{{ concept_types }}> && requires {
+    {% for constraint in semantic_info.constraints %}
+    requires {{ constraint }};
+    {% endfor %}
+    {% if semantic_info.return_constraint %}
+    requires {{ semantic_info.return_constraint }}<tincup::invocable_t<{{ canonical_concept_args }}>>;
+    {% endif %}
+};
+{% endif %}
+
+template<{{ arg_types }}>
+using {{ cpo_name }}_return_t = tincup::invocable_t<{{ canonical_concept_args }}>;
+
+template<{{ arg_types }}>
+using {{ cpo_name }}_traits = tincup::cpo_traits<{{ canonical_concept_args }}>;
+
+// Usage: tincup::is_invocable_v<{{ canonical_concept_args }}>
+{% if semantic_info %}
+// Usage: {{ cpo_name }}_c<{{ concept_types }}> (semantic requirements included)
+{% endif %}
+{%- else %}
+// CPO-specific type aliases for convenient usage (concrete types)
+// Note: No concept aliases for concrete types - types are already known
+using {{ cpo_name }}_return_t = tincup::invocable_t<{{ canonical_concept_args }}>;
+using {{ cpo_name }}_traits = tincup::cpo_traits<{{ canonical_concept_args }}>;
+
+// Usage: tincup::is_invocable_v<{{ canonical_concept_args }}>
+{%- endif %}
+{% endmacro %}

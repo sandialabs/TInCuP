@@ -1,0 +1,10 @@
+# Test requirements for CPO pattern verification
+# Core testing framework (built into Python)
+# unittest - built-in
+
+# Optional: Enhanced test runners
+# pytest>=7.0.0
+# nose2>=0.10.0
+
+# For test coverage reporting (optional)
+# coverage>=6.0

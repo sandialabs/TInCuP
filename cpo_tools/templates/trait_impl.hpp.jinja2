@@ -1,0 +1,20 @@
+// Formatter-style trait specialization for third-party types
+// Place this in a TU (or header) in your project
+// This does NOT require modifying the third-party namespace or types
+
+namespace tincup {
+{% if tmpl_params %}{{ tmpl_params }}
+{% endif %}
+struct cpo_impl<{{ cpo_name }}_ftor, {{ target_type }}> {
+  template<class... Args>
+  static auto call({{ target_type }}& target, Args&&... args)
+    noexcept(noexcept(/* implement or adjust noexcept as needed */))
+    -> /* auto (adjust return type if desired) */
+  {
+    // TODO: implement {{ cpo_name }} for {{ target_type }}
+    // Example:
+    // return /* your implementation using 'target' and (args...) */;
+  }
+};
+
+} // namespace tincup
