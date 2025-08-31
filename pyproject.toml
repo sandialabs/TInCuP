@@ -1,6 +1,6 @@
 [project]
 name = "TInCuP"
-version = "1.0.3"
+dynamic = ["version"]
 description = "Library for Python generation of C++ customization point objects with tag_invoke" 
 requires-python = ">=3.8"
 dependencies = [
@@ -49,3 +49,6 @@ include = ["cpo_tools*"]
 
 [tool.setuptools.package-data]
 cpo_tools = ["templates/*", "templates/**/*"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}

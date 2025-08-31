@@ -1,6 +1,15 @@
 project('tincup', 'cpp',
-  version : '0.1.0',
-  license : 'MIT', # You should add a LICENSE file with the license text
+  # Resolve version from the repository's top-level VERSION if available,
+  # falling back to a local VERSION or '0.0.0'. This keeps Meson in sync.
+  version : run_command('sh', '-c',
+                        'if [ -f ../../VERSION ]; then cat ../../VERSION; '
+                        + 'elif [ -f VERSION ]; then cat VERSION; '
+                        + 'else echo 0.0.0; fi').stdout().strip(),
+  # Grab license type from the first line of LICENSE; fallback to BSD 3-Clause
+  license : run_command('sh', '-c',
+                        'if [ -f ../../LICENSE ]; then head -n1 ../../LICENSE; '
+                        + 'elif [ -f LICENSE ]; then head -n1 LICENSE; '
+                        + 'else echo BSD 3-Clause License; fi').stdout().strip(),
   default_options : ['cpp_std=c++20', 'warning_level=3'])
 
 # Reference the header within this subproject's directory structure

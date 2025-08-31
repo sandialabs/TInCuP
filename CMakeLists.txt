@@ -16,7 +16,21 @@
 
 cmake_minimum_required(VERSION 3.20)
 
-project(tincup LANGUAGES CXX)
+# Read version string from top-level VERSION file and use it for the project
+file(READ "${CMAKE_SOURCE_DIR}/VERSION" TINCUP_VERSION_STR)
+string(STRIP "${TINCUP_VERSION_STR}" TINCUP_VERSION_STR)
+if(TINCUP_VERSION_STR STREQUAL "")
+  set(TINCUP_VERSION_STR "0.0.0")
+endif()
+
+project(tincup VERSION ${TINCUP_VERSION_STR} LANGUAGES CXX)
+
+# Extract license type from first line of LICENSE
+file(STRINGS "${CMAKE_SOURCE_DIR}/LICENSE" TINCUP_LICENSE_LINE LIMIT_COUNT 1)
+if(TINCUP_LICENSE_LINE STREQUAL "")
+  set(TINCUP_LICENSE_LINE "BSD 3-Clause License")
+endif()
+set(TINCUP_LICENSE "${TINCUP_LICENSE_LINE}")
 
 # Delegate to the actual CMake configuration
 add_subdirectory(build_systems/cmake)
