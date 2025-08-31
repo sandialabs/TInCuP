@@ -17,7 +17,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 # Read version string from top-level VERSION file and use it for the project
-file(READ "${CMAKE_SOURCE_DIR}/VERSION" TINCUP_VERSION_STR)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" TINCUP_VERSION_STR)
 string(STRIP "${TINCUP_VERSION_STR}" TINCUP_VERSION_STR)
 if(TINCUP_VERSION_STR STREQUAL "")
   set(TINCUP_VERSION_STR "0.0.0")
