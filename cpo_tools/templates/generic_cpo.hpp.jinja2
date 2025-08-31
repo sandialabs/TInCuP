@@ -5,7 +5,7 @@
 {%- if is_llm_mode %}
 // LLM_TODO: Adjust expected signature if needed - currently: ({{ arg_pairs }})
 // LLM_HINT: The operator() calls are inherited from cpo_base via CRTP - no manual implementation needed
-{%- endif %}
+{% endif %}
 inline constexpr struct {{ cpo_name }}_ftor final : tincup::cpo_base<{{ cpo_name }}_ftor> {
   TINCUP_CPO_TAG("{{ cpo_name }}")
   inline static constexpr bool is_variadic = {{ 'true' if has_variadic else 'false' }};
