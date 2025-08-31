@@ -1,5 +1,16 @@
 // ADL-visible tag_invoke shim for forwarding to tincup::cpo_impl
 
+/**
+ * @brief ADL-visible shim that forwards {{ cpo_name }} calls on {{ target_type }}
+ *        to the corresponding tincup::cpo_impl specialization.
+ * @cpo_adl_shim
+ * @ingroup tincup_cpo_integrations
+ * [TODO: Describe forwarding behavior and constraints]
+ *
+ * @tparam Args Pack of forwarded argument types
+ * @param target Reference to the target object being customized
+ */
+
 {% if shim_namespace %}namespace {{ shim_namespace }} {
 {% endif %}
 {% if tmpl_params %}{{ tmpl_params }}
@@ -19,4 +30,3 @@ constexpr auto tag_invoke({{ cpo_name }}_ftor,
 {% if shim_namespace %}
 } // namespace {{ shim_namespace }}
 {% endif %}
-

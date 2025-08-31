@@ -3,3 +3,9 @@
  *  Each CPO header should tag its documentation with \ingroup tincup_cpos.
  */
 
+/** \defgroup tincup_cpo_integrations TInCuP CPO Integrations
+ *  Group for formatter-style integrations: trait specializations and ADL shims
+ *  that connect CPOs to third-party types.
+ *  Mark `tincup::cpo_impl<...>` specializations and any ADL shims with
+ *  \ingroup tincup_cpo_integrations.
+ */

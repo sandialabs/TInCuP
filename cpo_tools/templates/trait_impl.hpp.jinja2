@@ -5,6 +5,16 @@
 namespace tincup {
 {% if tmpl_params %}{{ tmpl_params }}
 {% endif %}
+/**
+ * @brief Trait specialization connecting {{ cpo_name }} to {{ target_type }}.
+ * @cpo_impl
+ * @ingroup tincup_cpo_integrations
+ * [TODO: Describe behavior, constraints, and noexcept/return guarantees.]
+ *
+ * @tparam Args Pack of forwarded argument types
+ * @param target Reference to the target object being customized
+ * @return [TODO: Describe return value and semantics]
+ */
 struct cpo_impl<{{ cpo_name }}_ftor, {{ target_type }}> {
   template<typename... Args>
   static auto call({{ target_type }}& target, Args&&... args)
