@@ -91,6 +91,19 @@ Troubleshooting CLI on macOS/Linux:
 - [Contributing](#contributing)
 - [License](#license)
 
+
+## References
+
+- [Customization Point Design in C++11 and Beyond](https://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/)
+- [Suggested Design for Customization Points](https://open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html)
+- [**P1665r0** Tag based customization points](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1665r0.pdf)
+- [**P1895R0** `tag_invoke`: A general pattern for supporting customisable functions](https://open-std.org/JTC1/SC22/WG21/docs/papers/2019/p1895r0.pdf)
+- [Why `tag_invoke` is not the solution I want | Barry's C++ Blog](https://brevzin.github.io/c++/2020/12/01/tag-invoke/)
+- [**P2279R0** We need a language mechanism for customization points](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2279r0.html) 
+- [**P2547R0** Language support for customisable functions](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2547r0.pdf)
+- [**P2855R1** Member customization points for Senders and Receivers](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2855r1.html)
+
+
 ## The Problem with Existing Approaches
 
 C++ customization mechanisms have fundamental limitations that the standardization committee has recognized in WG21 papers **P1895R0** and **P2279R0**:
