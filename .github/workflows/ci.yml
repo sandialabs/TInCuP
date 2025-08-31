@@ -177,7 +177,7 @@ jobs:
           - toolchain: msvc
             generator: "Visual Studio 17 2022"
           - toolchain: mingw
-            generator: "MinGW Makefiles"
+            generator: "Ninja"
     
     steps:
     - uses: actions/checkout@v4
