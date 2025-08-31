@@ -1,0 +1,87 @@
+name: CPO Pattern Verification
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'include/**'
+      - 'cpo_tools/**'
+      - 'tests/**'
+      - '*.py'
+      - 'setup.py'
+      - 'pyproject.toml'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'include/**'
+      - 'cpo_tools/**'
+      - 'tests/**'
+      - '*.py'
+      - 'setup.py'
+      - 'pyproject.toml'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-patterns:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install jinja2  # Core dependency
+        pip install -e .
+        
+    - name: Verify existing CPO patterns in codebase
+      run: |
+        python3 -m cpo_tools.cpo_verification . --strict
+      continue-on-error: true  # Don't fail build yet, just report
+        
+    - name: Generate test coverage report
+      run: |
+        pip install coverage
+        python3 tests/run_tests.py --coverage
+      continue-on-error: true
+
+  cpp-compile-test:
+    runs-on: ubuntu-latest
+    needs: verify-patterns
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install C++ dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++-11 cmake
+        
+    - name: Test generated CPOs compile
+      run: |
+        # Generate sample CPOs and verify they compile
+        mkdir -p build/test_generated
+        python3 -m cpo_tools.cpo_generator '{"cpo_name": "test_compile", "args": ["$T&: arg"]}' > build/test_generated/test.hpp
+        
+        # Create minimal test program
+        cat > build/test_generated/test.cpp << 'EOF'
+        #include "tincup/tincup.hpp"
+        #include "test.hpp"
+        int main() { return 0; }
+        EOF
+        
+        # Try to compile
+        cd build/test_generated
+        g++-11 -std=c++20 -I../../include -c test.cpp
