@@ -3,15 +3,40 @@ name: CI
 on:
   push:
     branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'tincup.png'
+      - '.vscode/settings.json'
+      - 'editor_integration/vscode/.vscode/settings.json'
   pull_request:
     branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'tincup.png'
+      - '.vscode/settings.json'
+      - 'editor_integration/vscode/.vscode/settings.json'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   python-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     
     steps:
     - uses: actions/checkout@v4
@@ -25,6 +50,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e .
+        if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
         pip install quom
     
     - name: Run Python tests
@@ -236,3 +262,148 @@ jobs:
       shell: msys2 {0}
       run: |
         cd build && ctest --output-on-failure
+
+  consumer-smoke-ubuntu:
+    name: Consumer Smoke (CMake + Meson)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake meson ninja-build
+      - name: Smoke compile (CMake consumer)
+        run: |
+          mkdir -p build/smoke
+          cat > build/smoke/CMakeLists.txt << 'EOF'
+          cmake_minimum_required(VERSION 3.20)
+          project(tincup_smoke CXX)
+          add_subdirectory($ENV{GITHUB_WORKSPACE}/build_systems/cmake ${CMAKE_BINARY_DIR}/tincup)
+          add_executable(smoke main.cpp)
+          target_link_libraries(smoke PRIVATE tincup::tincup)
+          EOF
+          cat > build/smoke/main.cpp << 'EOF'
+          #include <tincup/tincup.hpp>
+          int main() { return 0; }
+          EOF
+          cmake -S build/smoke -B build/smoke_build -G Ninja
+          cmake --build build/smoke_build -v
+      - name: Smoke compile (Meson consumer)
+        run: |
+          mkdir -p build/meson_smoke/subprojects
+          cat > build/meson_smoke/meson.build << 'EOF'
+          project('tincup_smoke', 'cpp', default_options: ['cpp_std=c++20'])
+          tincup_proj = subproject('tincup', default_options: ['cpp_std=c++20'])
+          tincup_dep = tincup_proj.get_variable('tincup_dep')
+          executable('smoke', 'main.cpp', dependencies : [tincup_dep])
+          EOF
+          cat > build/meson_smoke/main.cpp << 'EOF'
+          #include <tincup/tincup.hpp>
+          int main() { return 0; }
+          EOF
+          ln -s "$GITHUB_WORKSPACE/build_systems/meson" build/meson_smoke/subprojects/tincup
+          meson setup build/meson_smoke_build build/meson_smoke
+          meson compile -C build/meson_smoke_build -v
+
+  clang-analyzer:
+    name: Clang Static Analyzer (CMake)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build and analyzer tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build clang clang-tools
+      - name: Configure (CMake, Ninja, Clang)
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          cmake -S . -B build -G Ninja -DENABLE_EXAMPLES=ON
+      - name: Run clang static analyzer
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          scan-build -analyze-headers -v --status-bugs -o analyzer-reports cmake --build build -v
+      - name: Upload analyzer report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-analyzer-reports
+          path: analyzer-reports
+
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools and clang-tidy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build clang clang-tidy
+      - name: Configure (export compile_commands)
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_EXAMPLES=ON
+      - name: Run clang-tidy on tests/examples
+        run: |
+          python3 - << 'PY'
+          import json, subprocess
+          with open('build/compile_commands.json') as f:
+              cmds = json.load(f)
+          files = sorted({entry['file'] for entry in cmds if any(entry['file'].startswith(p) for p in ('tests/', 'examples/'))})
+          if not files:
+              files = sorted({entry['file'] for entry in cmds})
+          args = ['run-clang-tidy', '-p', 'build', '-quiet'] + files
+          subprocess.run(args, check=False)
+          PY
+
+  python-fuzz:
+    name: Python Fuzz (atheris)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install atheris
+      - name: Run fuzz harness (time-bounded)
+        run: |
+          python tests/fuzz/fuzz_cpo_generator.py -max_total_time=60
+
+  checkin-script-test:
+    name: Test checkin.sh script
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install build tools and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake meson ninja-build
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install quom
+      - name: Run checkin script
+        run: |
+          ./scripts/checkin.sh
+      - name: Verify single header was generated
+        run: |
+          ls -la single_include/tincup.hpp
+          echo '#include "single_include/tincup.hpp"' > test_single_header.cpp
+          echo 'int main() { return 0; }' >> test_single_header.cpp
+          g++ -std=c++20 -c test_single_header.cpp && rm test_single_header.cpp test_single_header.o
