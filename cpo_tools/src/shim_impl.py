@@ -6,11 +6,12 @@
 #
 # Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 
+from typing import Optional
 from jinja2 import Environment
 from .trait_impl import _analyze_target
 
 
-def render_adl_shim(env: Environment, cpo_name: str, target: str, shim_namespace: str | None) -> str:
+def render_adl_shim(env: Environment, cpo_name: str, target: str, shim_namespace: Optional[str]) -> str:
     tmpl_params, specialized_target = _analyze_target(target)
     template = env.get_template('trait_adl_shim.hpp.jinja2')
     return template.render({
@@ -19,4 +20,3 @@ def render_adl_shim(env: Environment, cpo_name: str, target: str, shim_namespace
         'target_type': specialized_target,
         'shim_namespace': shim_namespace,
     })
-
