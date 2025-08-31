@@ -13,8 +13,10 @@ set -e  # Exit on any error
 echo "=== TInCuP Pre-Checkin Script ==="
 echo "This script will:"
 echo "1. Generate the single header file"
-echo "2. Check copyright banners"
-echo "3. Run local CI tests"
+echo "2. Update README install version"
+echo "3. Update README examples"
+echo "4. Check copyright banners"
+echo "5. Run local CI tests"
 echo ""
 
 # Get the directory where this script is located
@@ -37,8 +39,32 @@ else
 fi
 echo ""
 
-# Step 2: Check copyright banners
-echo "🏷️  Step 2: Checking copyright banners..."
+# Step 2: Update README install version
+echo "🔢 Step 2: Updating README install version from VERSION..."
+cd "$PROJECT_ROOT"
+python3 scripts/update_readme_version.py
+if [ $? -eq 0 ]; then
+    echo "✅ README install version updated"
+else
+    echo "❌ Updating README install version failed"
+    exit 1
+fi
+echo ""
+
+# Step 3: Update README examples
+echo "📝 Step 3: Updating README examples..."
+cd "$PROJECT_ROOT"
+python3 scripts/update_readme_examples.py
+if [ $? -eq 0 ]; then
+    echo "✅ README examples updated"
+else
+    echo "❌ Updating README examples failed"
+    exit 1
+fi
+echo ""
+
+# Step 4: Check copyright banners
+echo "🏷️  Step 4: Checking copyright banners..."
 cd "$PROJECT_ROOT"
 python scripts/banner_check.py
 if [ $? -eq 0 ]; then
@@ -50,8 +76,8 @@ else
 fi
 echo ""
 
-# Step 3: Run local CI
-echo "🔧 Step 3: Running local CI tests..."
+# Step 5: Run local CI
+echo "🔧 Step 5: Running local CI tests..."
 cd "$SCRIPT_DIR"
 ./run_local_ci.sh
 if [ $? -eq 0 ]; then

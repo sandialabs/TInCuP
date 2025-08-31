@@ -40,20 +40,22 @@ how it does it.
 
 ## Installation
 
-- Python tools: `pip install TInCuP==1.0.0` (installs the `cpo-generator` CLI)
+- Python tools (latest): `pip install TInCuP` (installs the `cpo-generator` CLI)
+- Python tools (this release): `pip install TInCuP==1.0.4`
 - From source (development): `pip install -e .`
 
 Troubleshooting CLI on macOS/Linux:
 - If `cpo-generator` is not found after install, ensure your user scripts directory is on `PATH`:
   - `export PATH="$(python3 -m site --user-base)/bin:$PATH"`
   - Add the line above to your shell profile (e.g., `~/.zshrc` or `~/.bashrc`).
-- Alternatively, use `pipx` to manage CLI tools: `pipx install TInCuP==1.0.0`
+- Alternatively, use `pipx` to manage CLI tools: `pipx install TInCuP` or `pipx install TInCuP==1.0.4`
 - The module form always works: `python3 -m cpo_tools.cpo_generator --help`.
 
 ## Get, Feedback, Contribute
 
 - Obtain:
-  - PyPI: `pip install TInCuP==1.0.0`
+  - PyPI (latest): `pip install TInCuP`
+  - PyPI (this release): `pip install TInCuP==1.0.4`
   - Source: `git clone https://github.com/sandialabs/TInCuP.git && cd TInCuP && pip install -e .`
   - Header-only C++: see [C++ Library Usage](#c-library-usage) and [Integration with Build Systems](#integration-with-build-systems)
 - Feedback (bugs/enhancements): open an issue: https://github.com/sandialabs/TInCuP/issues
@@ -324,7 +326,11 @@ The Python-based code generator is the fastest way to create new CPOs.
 Preferred (PyPI):
 
 ```bash
-pip install TInCuP==1.0.0
+# latest
+pip install TInCuP
+
+# exact version (this release)
+pip install TInCuP==1.0.4
 ```
 
 For development (from source):
@@ -1244,8 +1250,9 @@ make -f build_systems/make/Makefile verify-cpos # Verify CPO patterns
 
 The `checkin.sh` script automatically:
 1. 📦 **Generates the single header** (`single_include/tincup.hpp`)
-2. 🏷️ **Verifies copyright banners** on all source files  
-3. 🔧 **Runs complete local CI** (mirrors GitHub Actions exactly)
+2. 📝 **Updates README examples** from `scripts/readme_examples.json`
+3. 🏷️ **Verifies copyright banners** on all source files
+4. 🔧 **Runs complete local CI** (mirrors GitHub Actions exactly)
 
 This ensures your changes are ready for commit and won't break CI.
 
