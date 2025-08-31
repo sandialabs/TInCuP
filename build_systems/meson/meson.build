@@ -54,4 +54,10 @@ if not meson.is_subproject()
                         include_directories: [tincup_inc],
                         cpp_args: werror_args)
   test('static_dispatch', test_exe)
+
+  # ADL shim + trait impl integration test (std::vector)
+  shim_test_exe = executable('test_adl_trait_shim', files('tests/test_adl_trait_shim.cpp'),
+                             include_directories: [tincup_inc],
+                             cpp_args: werror_args)
+  test('adl_trait_shim', shim_test_exe)
 endif

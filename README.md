@@ -863,6 +863,42 @@ When you need to customize CPOs for types you do not control (for example, `Kokk
 - Discovery: This trait mirrors the approach used by `std::formatter`. Specializations live in namespace `tincup` and do not require modifying third-party headers.
 - Generation support: use the generator to emit a skeleton specialization.
 
+Trait impl targets and generics
+
+- Use '$Name' in --impl-target to declare a template parameter 'Name'.
+- Use '$Name...' to declare a parameter pack.
+- Use '...' to declare an anonymous pack (maps to 'typename... P').
+- Bare identifiers (e.g., 'double') are treated as concrete types and will not create template parameters.
+- Named packs without '$' (e.g., 'Rest...') are invalid and will error — write '$Rest...' instead.
+
+Examples:
+
+```bash
+# Single generic parameter
+cpo-generator '{"cpo_name":"foo","args":["$V&: x"]}' \
+  --impl-target 'MyContainer<$T>' --trait-impl-only
+
+# Head + tail pack (e.g., Kokkos::View first parameter + rest)
+cpo-generator '{"cpo_name":"add_in_place","args":["$V&&: y","$const V&: x"]}' \
+  --impl-target 'Kokkos::View<$T, $Rest...>' --trait-impl-only
+
+# Concrete first parameter, generic tail pack
+cpo-generator '{"cpo_name":"add_in_place","args":["$V&&: y","$const V&: x"]}' \
+  --impl-target 'Kokkos::View<double, $Rest...>' --trait-impl-only
+```
+
+The corresponding specialization headers use 'typename' consistently, for example:
+
+```cpp
+namespace tincup {
+template<typename T, typename... Rest>
+struct cpo_impl<add_in_place_ftor, Kokkos::View<T, Rest...>> {
+  template<typename... Args>
+  static auto call(Kokkos::View<T, Rest...>& target, Args&&... args) -> /* auto */;
+};
+} // namespace tincup
+```
+
 Example: generate a trait specialization for a string-dispatch CPO targeting a third-party template type
 
 ```bash
@@ -888,6 +924,49 @@ Notes:
 - You can wrap emission in a macro guard with `--impl-guard MACRO`.
 - This approach avoids defining functions in third-party namespaces and does not require inheritance or wrappers at call sites.
 - It is suitable for both concrete and templated third-party types; use `'...'` in `--impl-target` to denote a template parameter pack (e.g., `Kokkos::View<...>`).
+
+### Trait + ADL Shim (std::vector)
+
+Use an ADL-visible shim in your CPO's namespace that forwards to the `tincup::cpo_impl` specialization. This keeps the core CPO free of TPL references and requires no wrappers.
+
+- Command (emit trait + shim):
+
+```bash
+cpo-generator --from-registry add_in_place_ftor \
+  --impl-target 'std::vector<$T, $Alloc>' \
+  --emit-trait-impl --emit-adl-shim --shim-namespace 'myproj' \
+  --out include/myproj/add_in_place_vector.hpp
+```
+
+- Result (simplified):
+
+```cpp
+// myproj/add_in_place.hpp (core CPO)
+namespace myproj {
+inline constexpr struct add_in_place_ftor final : tincup::cpo_base<add_in_place_ftor> {
+  TINCUP_CPO_TAG("add_in_place");
+} add_in_place;
+} // namespace myproj
+
+// Integration header (trait + ADL shim)
+namespace tincup {
+template<typename T, typename Alloc>
+struct cpo_impl<myproj::add_in_place_ftor, std::vector<T, Alloc>> {
+  static void call(std::vector<T, Alloc>& y, const std::vector<T, Alloc>& x);
+};
+} // namespace tincup
+
+namespace myproj {
+template<typename T, typename Alloc, typename... Args>
+constexpr auto tag_invoke(add_in_place_ftor, std::vector<T, Alloc>& y, Args&&... args)
+  noexcept(noexcept(tincup::cpo_impl<add_in_place_ftor, std::vector<T, Alloc>>::call(y, std::forward<Args>(args)...)))
+  -> decltype(tincup::cpo_impl<add_in_place_ftor, std::vector<T, Alloc>>::call(y, std::forward<Args>(args)...));
+} // namespace myproj
+```
+
+- Behavior:
+  - Calls like `myproj::add_in_place(vec, other)` resolve to the shim via ADL, which forwards to `cpo_impl<...>::call(...)`.
+  - No third-party symbols appear in the core CPO definition.
 
 ## Vim Plugin
 

@@ -1,0 +1,22 @@
+// ADL-visible tag_invoke shim for forwarding to tincup::cpo_impl
+
+{% if shim_namespace %}namespace {{ shim_namespace }} {
+{% endif %}
+{% if tmpl_params %}{{ tmpl_params }}
+{% endif %}
+template<typename... Args>
+constexpr auto tag_invoke({{ cpo_name }}_ftor,
+                          {{ target_type }}& target,
+                          Args&&... args)
+  noexcept(noexcept(tincup::cpo_impl<{{ cpo_name }}_ftor, {{ target_type }}>
+                      ::call(target, std::forward<Args>(args)...)))
+  -> decltype(tincup::cpo_impl<{{ cpo_name }}_ftor, {{ target_type }}>
+                ::call(target, std::forward<Args>(args)...))
+{
+  return tincup::cpo_impl<{{ cpo_name }}_ftor, {{ target_type }}>
+           ::call(target, std::forward<Args>(args)...);
+}
+{% if shim_namespace %}
+} // namespace {{ shim_namespace }}
+{% endif %}
+

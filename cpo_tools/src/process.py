@@ -138,6 +138,11 @@ def process_input(input_data, generate_doxygen_cli, template_env: Environment):
                 else:
                     arg_data["full"] = type_name.replace("...", "")
             else:
+                # Disallow named packs without '$' (e.g., 'Rest...')
+                if is_variadic and re.search(r"[A-Za-z_][A-Za-z0-9_]*\s*\.\.\.", full_type):
+                    raise ValueError(
+                        f"Invalid variadic token in argument type '{full_type}': use '$Name...' to declare a pack"
+                    )
                 arg_data["full"] = full_type.replace("...", "")
 
             arg_data["is_forwarding"] = is_forwarding_ref

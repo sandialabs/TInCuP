@@ -6,7 +6,7 @@ namespace tincup {
 {% if tmpl_params %}{{ tmpl_params }}
 {% endif %}
 struct cpo_impl<{{ cpo_name }}_ftor, {{ target_type }}> {
-  template<class... Args>
+  template<typename... Args>
   static auto call({{ target_type }}& target, Args&&... args)
     noexcept(noexcept(/* implement or adjust noexcept as needed */))
     -> /* auto (adjust return type if desired) */

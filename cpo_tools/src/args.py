@@ -80,7 +80,51 @@ $ cpo-generator '{"cpo_name": "execute_policy",
         "--impl-target",
         dest="impl_target",
         metavar="TYPE",
-        help="Target type for trait specialization, e.g. 'Kokkos::View<...>'. Use '...' to denote a template parameter pack.",
+        help=(
+            "Target type for trait specialization, e.g. 'Kokkos::View<T>' or 'Kokkos::View<...>'. "
+            "Use named generics (T, U, Ts...) to declare template parameters, or '...' for an anonymous pack."
+        ),
+    )
+    parser.add_argument(
+        "--trait-impl-only",
+        dest="trait_impl_only",
+        action="store_true",
+        help=(
+            "Only emit the trait specialization (no CPO body). Useful when adding third-party integrations."
+        ),
+    )
+    parser.add_argument(
+        "--from-registry",
+        dest="from_registry",
+        metavar="NAME",
+        help=(
+            "Look up an existing CPO by name (tag or functor struct) in a cpo_registry.json and use it as cpo_name."
+        ),
+    )
+    parser.add_argument(
+        "--registry-path",
+        dest="registry_path",
+        default="docs/cpo_registry.json",
+        metavar="PATH",
+        help=(
+            "Path to cpo_registry.json (defaults to docs/cpo_registry.json). If not found, you can generate it via cpo_tools/cpo_registry.py."
+        ),
+    )
+    parser.add_argument(
+        "--emit-adl-shim",
+        dest="emit_adl_shim",
+        action="store_true",
+        help=(
+            "Emit an ADL-visible tag_invoke shim in the CPO's namespace that forwards to cpo_impl<CPO, Target>::call(...)"
+        ),
+    )
+    parser.add_argument(
+        "--shim-namespace",
+        dest="shim_namespace",
+        metavar="NS",
+        help=(
+            "Namespace where the ADL shim should be emitted (e.g., your CPO's namespace)."
+        ),
     )
     parser.add_argument(
         "--impl-guard",

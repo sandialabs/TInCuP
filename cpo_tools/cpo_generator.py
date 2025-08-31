@@ -13,20 +13,70 @@ CPO Generator for C++
 Generates C++ Customization Point Object (CPO) boilerplate code from a JSON definition.
 This is a standalone tool for creating modern C++20 CPOs using the tag_invoke pattern.
 
-The script supports two main modes of operation:
+Modes
+-----
+1) VIM_MODE: Compact syntax for CPOs (original Vim integration)
+   Example:
+     cpo-generator '{"cpo_name": "my_cpo", "args": ["$T&: target", "$const U&: source"]}'
 
-1.  VIM_MODE: A compact syntax for generating CPOs, originally designed for Vim integration.
-    Example:
-    cpo-generator '{"cpo_name": "my_cpo", "args": ["$T&: target", "$const U&: source"]}'
-
-2.  LLM_MODE: A semantic, high-level interface for generating CPOs based on predefined
-    operation patterns, making it more accessible for Large Language Models (LLMs) and users
-    unfamiliar with the compact syntax.
-    Example:
-    cpo-generator '{"cpo_name": "process", "operation_type": "mutating_binary"}'
+2) LLM_MODE: Semantic, high-level interface based on predefined operation patterns
+   Example:
+     cpo-generator '{"cpo_name": "process", "operation_type": "mutating_binary"}'
 
 The script can read the JSON input from a command-line argument or from stdin,
 making it suitable for both interactive and scripted use.
+
+Trait-based Third-Party Integration
+-----------------------------------
+You can specialize a formatter-style trait for third-party/container types and optionally emit
+an ADL-visible forwarding shim, keeping your core CPO code free of TPL references.
+
+Generic syntax in --impl-target:
+- Use '$T' to declare a type parameter T (template<typename T>).
+- Use '$Rest...' to declare a parameter pack (template<typename... Rest>).
+- Use '...' for an anonymous pack (template<typename... P> with P...).
+- Bare identifiers (e.g., 'double') are concrete and do not become template parameters.
+- Named packs without '$' (e.g., 'Rest...') are invalid and will error.
+
+Examples (std::vector integration, no external deps):
+
+1) Emit only a trait specialization (formatter-style):
+   cpo-generator --from-registry add_in_place_ftor \
+     --impl-target 'std::vector<$T, $Alloc>' \
+     --trait-impl-only
+
+   // Produces (simplified):
+   // namespace tincup {
+   // template<typename T, typename Alloc>
+   // struct cpo_impl<add_in_place_ftor, std::vector<T, Alloc>> { /* static call(...) */ };
+   // }
+
+2) Emit trait + ADL-visible shim in your CPO's namespace:
+   cpo-generator --from-registry add_in_place_ftor \
+     --impl-target 'std::vector<$T, $Alloc>' \
+     --emit-trait-impl --emit-adl-shim --shim-namespace 'myproj'
+
+   // Adds (simplified):
+   // namespace myproj {
+   // template<typename T, typename Alloc, typename... Args>
+   // constexpr auto tag_invoke(add_in_place_ftor, std::vector<T, Alloc>&, Args&&...);
+   // }
+
+3) Concrete head + generic tail:
+   cpo-generator --from-registry add_in_place_ftor \
+     --impl-target 'std::vector<double, $Rest...>' \
+     --trait-impl-only
+
+4) Without a registry (pass JSON spec directly):
+   cpo-generator '{"cpo_name":"add_in_place","args":["$V&&: y","$const V&: x"]}' \
+     --impl-target 'std::vector<$T, $Alloc>' --emit-trait-impl
+
+Registry support
+----------------
+Use cpo_tools/cpo_registry.py to scan your headers for CPOs and emit docs/cpo_registry.json:
+  python3 cpo_tools/cpo_registry.py --root include --out docs
+Then pass --from-registry <tag-name or functor-struct> to refer to an existing CPO
+without re-specifying the JSON.
 """
 import sys
 import json
@@ -42,6 +92,7 @@ from cpo_tools.src.args import parse_args
 from cpo_tools.src.llm import show_llm_help
 from cpo_tools.src.process import process_input
 from cpo_tools.src.trait_impl import render_trait_impl
+from cpo_tools.src.shim_impl import render_adl_shim
 from cpo_tools.src.output import wrap_output, write_output
 
 
@@ -86,20 +137,30 @@ def main():
             sys.exit(1)
     else:
         input_str = ""
-        if args.json_spec:
-            input_str = args.json_spec
-        elif not sys.stdin.isatty():
-            input_str = sys.stdin.read()
+        # Support a minimal flow when only generating a trait impl from registry
+        minimal_trait_flow = (
+            (args.trait_impl_only or args.emit_trait_impl or args.impl_target)
+            and args.from_registry
+            and not args.json_spec
+            and sys.stdin.isatty()
+        )
+        if minimal_trait_flow:
+            input_data = {"cpo_name": args.from_registry, "args": []}
         else:
-            parser.print_help()
-            sys.exit(1)
-        try:
-            input_data = json.loads(input_str)
-        except json.JSONDecodeError:
-            print(
-                f"Error: Invalid JSON input provided.\n'{input_str}'", file=sys.stderr
-            )
-            sys.exit(1)
+            if args.json_spec:
+                input_str = args.json_spec
+            elif not sys.stdin.isatty():
+                input_str = sys.stdin.read()
+            else:
+                parser.print_help()
+                sys.exit(1)
+            try:
+                input_data = json.loads(input_str)
+            except json.JSONDecodeError:
+                print(
+                    f"Error: Invalid JSON input provided.\n'{input_str}'", file=sys.stderr
+                )
+                sys.exit(1)
 
     try:
         template_env = Environment(
@@ -107,7 +168,45 @@ def main():
             trim_blocks=True,
             lstrip_blocks=True,
         )
-        generated_code, ctx = process_input(input_data, args.doxygen, template_env)
+        # If using registry-only trait generation, resolve cpo_name from registry and skip full processing
+        ctx = None
+        if args.from_registry and (args.trait_impl_only or args.impl_target):
+            # Try to read registry
+            try:
+                reg_path = Path(args.registry_path)
+                reg = json.loads(reg_path.read_text()) if reg_path.exists() else None
+            except Exception as e:
+                print(f"Warning: Failed to read registry at {reg_path}: {e}", file=sys.stderr)
+                reg = None
+
+            cpo_name = None
+            if reg:
+                key = args.from_registry
+                # Match by struct or tag name
+                for entry in reg:
+                    struct = entry.get("struct")
+                    name = entry.get("name")
+                    if key == struct or key == name:
+                        # Prefer struct-derived base (strip _ftor)
+                        if struct and struct.endswith("_ftor"):
+                            cpo_name = struct[:-5]
+                        elif struct:
+                            cpo_name = struct
+                        else:
+                            cpo_name = name
+                        break
+            # Fallback: use provided key directly
+            if not cpo_name:
+                cpo_name = args.from_registry
+                if cpo_name.endswith("_ftor"):
+                    cpo_name = cpo_name[:-5]
+
+            ctx = {"cpo_name": cpo_name, "has_generics": False, "arg_pairs": "", "arg_types": "", "llm_metadata": {}}
+
+        if ctx is None:
+            generated_code, ctx = process_input(input_data, args.doxygen, template_env)
+        else:
+            generated_code = ""  # Will be replaced if not trait-only
 
         if args.emit_stub:
             sig = (
@@ -138,15 +237,30 @@ def main():
                 stub += f"\n#ifdef {guard}\n{defn}#endif\n"
             generated_code = generated_code.rstrip() + "\n\n" + stub
 
-        # Optionally append a trait specialization skeleton
+        # If --impl-target provided, imply --emit-trait-impl
+        if args.impl_target and not args.emit_trait_impl:
+            args.emit_trait_impl = True
+
+        # Optionally append or emit a trait specialization skeleton
         if args.emit_trait_impl:
             if not args.impl_target:
-                print("Error: --emit-trait-impl requires --impl-target TYPE (e.g., 'Kokkos::View<...>')", file=sys.stderr)
+                print("Error: --emit-trait-impl requires --impl-target TYPE (e.g., 'Kokkos::View<T>' or 'Kokkos::View<...>')", file=sys.stderr)
                 sys.exit(1)
             trait_code = render_trait_impl(template_env, ctx["cpo_name"], args.impl_target, ctx)
             if args.impl_guard:
                 trait_code = f"#ifdef {args.impl_guard}\n{trait_code}\n#endif\n"
-            generated_code = generated_code.rstrip() + "\n\n" + trait_code
+            if args.trait_impl_only:
+                generated_code = trait_code
+            else:
+                generated_code = generated_code.rstrip() + "\n\n" + trait_code
+
+        # Optionally append an ADL shim in the specified namespace
+        if args.emit_adl_shim:
+            if not args.impl_target:
+                print("Error: --emit-adl-shim requires --impl-target TYPE to know the receiver type.", file=sys.stderr)
+                sys.exit(1)
+            shim_code = render_adl_shim(template_env, ctx["cpo_name"], args.impl_target, args.shim_namespace)
+            generated_code = generated_code.rstrip() + "\n\n" + shim_code
 
         if args.namespace or args.with_include:
             generated_code = wrap_output(
