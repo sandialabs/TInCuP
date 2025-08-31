@@ -36,24 +36,35 @@ function(tincup_set_warnings target)
 endfunction()
 
 # --- Testing & Examples ---
-enable_testing()
+# Determine if TInCuP is the main project or a subproject
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  set(TINCUP_IS_MAIN_PROJECT TRUE)
+else()
+  set(TINCUP_IS_MAIN_PROJECT FALSE)
+endif()
+
+option(TINCUP_ENABLE_TESTING "Enable TInCuP testing" ${TINCUP_IS_MAIN_PROJECT})
+
+if(TINCUP_ENABLE_TESTING)
+  enable_testing()
+endif()
 
 # Only add the examples if they are enabled AND we are building the main project,
 # not an external project (like the smoke test) that includes this one.
 if(ENABLE_EXAMPLES AND (PROJECT_NAME STREQUAL "tincup"))
-  add_subdirectory(${CMAKE_SOURCE_DIR}/examples
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../examples
                    ${CMAKE_BINARY_DIR}/examples)
 endif()
 
 # --- Tests ---
-# Build and register the static dispatch test only when this is the main project
-if(PROJECT_NAME STREQUAL "tincup")
-  add_executable(test_static_dispatch ${CMAKE_SOURCE_DIR}/tests/test_static_dispatch.cpp)
+# Build and register tests only when testing is enabled and this is the main project
+if(TINCUP_ENABLE_TESTING AND PROJECT_NAME STREQUAL "tincup")
+  add_executable(test_static_dispatch ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/test_static_dispatch.cpp)
   target_link_libraries(test_static_dispatch PRIVATE tincup::tincup)
   tincup_set_warnings(test_static_dispatch)
   add_test(NAME test_static_dispatch COMMAND test_static_dispatch)
 
-  add_executable(test_adl_trait_shim ${CMAKE_SOURCE_DIR}/tests/test_adl_trait_shim.cpp)
+  add_executable(test_adl_trait_shim ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/test_adl_trait_shim.cpp)
   target_link_libraries(test_adl_trait_shim PRIVATE tincup::tincup)
   tincup_set_warnings(test_adl_trait_shim)
   add_test(NAME test_adl_trait_shim COMMAND test_adl_trait_shim)
