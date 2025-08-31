@@ -156,7 +156,8 @@ jobs:
     
     - name: Setup build directory
       run: |
-        meson setup build
+        # Point Meson at the actual source dir
+        meson setup build build_systems/meson -Denable_examples=true
     
     - name: Build
       run: |

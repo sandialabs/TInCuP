@@ -113,6 +113,35 @@ cleanup_build_dir() {
     log_success "Created fresh build directory: $BUILD_DIR"
 }
 
+# Generate single header and test it (mirrors single-header-tests job)
+run_single_header_tests() {
+    log_section "Single Header Generation + Test"
+
+    cd "$PROJECT_ROOT"
+
+    # Use a lightweight venv to ensure quom is available like CI
+    local venv_dir="$BUILD_DIR/venv_single_header"
+    python3 -m venv "$venv_dir"
+    # shellcheck source=/dev/null
+    source "$venv_dir/bin/activate"
+    python -m pip install --upgrade pip >/dev/null
+    pip install -e . >/dev/null
+    pip install quom >/dev/null
+
+    # Generate the single header (scripts/generate_single_header.py)
+    log_info "Generating single header with quom..."
+    (cd scripts && python generate_single_header.py)
+    log_success "Single header generated in single_include/tincup.hpp"
+
+    # Compile and run the dedicated single-header test like CI
+    log_info "Compiling single header test..."
+    g++ -std=c++20 -Wall -Wextra -I. tests/test_single_header.cpp -o "$BUILD_DIR/test_single_header"
+    "$BUILD_DIR/test_single_header"
+    log_success "Single header test passed"
+
+    deactivate
+}
+
 # Python tests (mirrors python-tests job)
 run_python_tests() {
     log_section "Python Tests"
@@ -400,6 +429,7 @@ main() {
     
     check_prerequisites
     cleanup_build_dir
+    run_single_header_tests
     run_python_tests
     run_build_system_tests
     run_editor_integration_tests
