@@ -25,17 +25,12 @@ TInCuP helps you add clean, extensible “hooks” to your C++ library. Describe
 ### Have you ever been in a situation like the following?
 
 - You are developing `ImpressiveLib`, a very impressive library.
-- `ImpressiveLib` uses `AwesomeType`, which is defined in `CoolLib`, an open source library that you *don't* own. 
-- You'd *really* like to use `SpiffyLib`, another library you *don't* own, to do something with `AwesomeType`.
-- Unfortunately there is an interface incompatibility. It looks like you need to modify one of the two libraries. (DON'T!) 
+- You would like `ImpressiveLib` to be generic and work with a variety of third party types.
+- For example, it should optionally use `AwesomeType`, which is defined in `CoolLib`, an open source library that you *don't* own. 
+- You don't want to write `ImpressiveLib`'s source code to use `#include <coollib>`. 
+- You are tempted to modify CoolLib in some way such as injecting ImpressiveLib types into it **(DON'T!)**.
 - This is where customization points can help!
 
-"BUT!" you say, "I don't have a *three body problem*. I don't care about `SpiffyLib`, I just want to use `AwesomeType` with `ImpressiveLib` without making `CoolLib` a requirement."
-
-Well, that's essentially the same problem, AKA "The Library Design Problem." It's technically only a *two* body 
-problem, but you are asking for `ImpressiveLib` to be generic and allow non-intrusive customization. This
-is what [`std::ranges`](https://en.cppreference.com/w/cpp/ranges.html) does and customization point objects are 
-how it does it.    
 
 
 ## Installation
