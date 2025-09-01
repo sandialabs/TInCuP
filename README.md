@@ -89,7 +89,7 @@ Troubleshooting CLI on macOS/Linux:
 
 ## References
 
-- [Customization Point Design in C++11 and Beyond](https://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/)
+- [**N4381** Customization Point Design in C++11 and Beyond](https://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/)
 - [Suggested Design for Customization Points](https://open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html)
 - [**P1665r0** Tag based customization points](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1665r0.pdf)
 - [**P1895R0** `tag_invoke`: A general pattern for supporting customisable functions](https://open-std.org/JTC1/SC22/WG21/docs/papers/2019/p1895r0.pdf)
