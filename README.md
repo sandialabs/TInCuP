@@ -944,6 +944,46 @@ Notes:
 - This approach avoids defining functions in third-party namespaces and does not require inheritance or wrappers at call sites.
 - It is suitable for both concrete and templated third-party types; use `'...'` in `--impl-target` to denote a template parameter pack (e.g., `Kokkos::View<...>`).
 
+## Trait Detection Helpers and Safe Patterns
+
+TInCuP provides opt-in helpers to detect whether a `tincup::cpo_impl` specialization exists for a given call. Use these to write “trait-first, generic-fallback” ADL shims without ambiguity.
+
+- `tincup::has_cpo_impl_for_c<CPO, Target, Args...>`: true if `cpo_impl<CPO, Target>::call(Target&, Args...)` is well-formed.
+- `tincup::has_specialized_cpo_impl_c<CPO, Args...>`: detects a specialization based on the principal argument (first parameter) of the call using `cpo_traits<CPO, Args...>::arg_t<0>`.
+- `_v` variable templates and `_t` aliases are also available.
+
+Recommended pattern (mutually exclusive overloads):
+
+```cpp
+namespace myproj {
+// Generic fallback only when no trait specialization exists
+template<std::ranges::range R>
+  requires (!tincup::has_cpo_impl_for_c<add_in_place_ftor, R, R&, const R&>)
+void tag_invoke(add_in_place_ftor, R& y, const R& x) {
+  std::ranges::transform(y, x, std::ranges::begin(y), std::plus<>{});
+}
+
+// Forwarding shim only when a trait specialization exists
+template<typename T, typename Alloc>
+  requires (tincup::has_cpo_impl_for_c<add_in_place_ftor,
+                                       std::vector<T,Alloc>,
+                                       std::vector<T,Alloc>&,
+                                       const std::vector<T,Alloc>&>)
+void tag_invoke(add_in_place_ftor, std::vector<T,Alloc>& y,
+                const std::vector<T,Alloc>& x) {
+  tincup::cpo_impl<add_in_place_ftor, std::vector<T,Alloc>>::call(y, x);
+}
+} // namespace myproj
+```
+
+Guidance and cautions:
+- Make overloads disjoint with explicit `requires` so both cannot be viable. Avoid ambiguous overloads.
+- Principal argument policy: detection keys off the first parameter; if your principal type differs, write a custom detector.
+- When constraining `tag_invoke` overloads for the same CPO, prefer `has_cpo_impl_for_c` with an explicit target type. Using `has_specialized_cpo_impl_c` there can recursively trigger CPO introspection and cause constraint recursion.
+- Do not place shims in foreign namespaces (`std`, third-party). Keep ADL-visible shims in your CPO’s namespace.
+- Keep trait specializations in one place to avoid ODR violations.
+- Performance varies by backend; benchmark both paths.
+
 ### Trait + ADL Shim (std::vector)
 
 Use an ADL-visible shim in your CPO's namespace that forwards to the `tincup::cpo_impl` specialization. This keeps the core CPO free of TPL references and requires no wrappers.

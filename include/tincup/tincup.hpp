@@ -17,6 +17,7 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 #include "cpo_base.hpp"
 #include "cpo_concepts.hpp"
 #include "cpo_traits.hpp"
+#include "cpo_impl_detect.hpp"
 
 namespace tincup {
 
