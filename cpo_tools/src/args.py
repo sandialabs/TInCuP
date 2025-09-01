@@ -34,6 +34,9 @@ $ cpo-generator '{"cpo_name": "execute_policy",
                     "type": "string", 
                     "dispatch_arg": "policy_name", 
                     "options": ["fast", "safe", "debug"]}}'
+
+Generic Naming Rule:
+- Do not reuse the same named generic as both a single type and a parameter pack within one CPO. For example, prefer '$V' and '$Vs...' over '$V' and '$V...'.
 """,
     )
     parser.add_argument(
@@ -82,7 +85,8 @@ $ cpo-generator '{"cpo_name": "execute_policy",
         metavar="TYPE",
         help=(
             "Target type for trait specialization, e.g. 'Kokkos::View<T>' or 'Kokkos::View<...>'. "
-            "Use named generics (T, U, Ts...) to declare template parameters, or '...' for an anonymous pack."
+            "Use named generics (T, U, Ts...) to declare template parameters, or '...' for an anonymous pack. "
+            "Do not reuse the same generic name as both a single type and a pack."
         ),
     )
     parser.add_argument(

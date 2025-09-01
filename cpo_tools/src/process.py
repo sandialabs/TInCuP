@@ -154,6 +154,18 @@ def process_input(input_data, generate_doxygen_cli, template_env: Environment):
                 f"Invalid argument format '{pair_str}'. Expected format 'type: name'"
             )
 
+    # Disallow using the same generic name as both a single type and a parameter pack
+    collisions = generic_base_types["non_variadic"].intersection(
+        generic_base_types["variadic"]
+    )
+    if collisions:
+        names = ", ".join(sorted(collisions))
+        raise ValueError(
+            "Generic name collision: the following template name(s) are used both "
+            f"as a single type and as a parameter pack: {names}. "
+            "Please use distinct names (e.g., use '$Vs...' for a pack and '$V' for a single)."
+        )
+
     concept_types_list = [
         (arg["base"] if arg["is_forwarding"] else arg["full"]) for arg in parsed_args
     ]
