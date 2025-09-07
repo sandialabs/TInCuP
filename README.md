@@ -31,7 +31,7 @@ TInCuP helps you add clean, extensible “hooks” to your C++ library. Describe
 - You are tempted to modify CoolLib in some way such as injecting ImpressiveLib types into it **(DON'T!)**.
 - This is where customization points can help!
 
-
+See TInCuP in action in [Real Vector Framework](http://github.com/sandialabs/RealVectorFramework.git)
 
 ## Installation
 
