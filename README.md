@@ -434,7 +434,7 @@ inline constexpr struct generic_cpo_ftor final : tincup::cpo_base<generic_cpo_ft
   constexpr auto operator()(T1& arg1, T2& arg2) const
     noexcept(tincup::nothrow_invocable_c<generic_cpo_ftor, T1&, T2&>) 
     -> tincup::invocable_t<generic_cpo_ftor, T1&, T2&> {
-    return tincup::tag_invoke_cpo(*this, arg1, arg2);
+    return tag_invoke(*this, arg1, arg2);
   }
 } generic_cpo;
 
@@ -479,9 +479,9 @@ inline constexpr struct concrete_cpo_ftor final : tincup::cpo_base<concrete_cpo_
   // Typed operator() overload - positive case only (concrete)  
   // Negative cases handled by tagged fallback in cpo_base
   constexpr auto operator()(int value, double& ref) const
-    noexcept(noexcept(tincup::tag_invoke_cpo(*this, value, ref))) 
-    -> decltype(tincup::tag_invoke_cpo(*this, value, ref)) {
-    return tincup::tag_invoke_cpo(*this, value, ref);
+    noexcept(noexcept(tag_invoke(*this, value, ref))) 
+    -> decltype(tag_invoke(*this, value, ref)) {
+    return tag_invoke(*this, value, ref);
   }
 } concrete_cpo;
 
@@ -519,7 +519,7 @@ inline constexpr struct forwarding_ref_cpo_ftor final : tincup::cpo_base<forward
   constexpr auto operator()(T&& fwd_ref) const
     noexcept(tincup::nothrow_invocable_c<forwarding_ref_cpo_ftor, T>) 
     -> tincup::invocable_t<forwarding_ref_cpo_ftor, T> {
-    return tincup::tag_invoke_cpo(*this, std::forward<T>(fwd_ref)...);
+    return tag_invoke(*this, std::forward<T>(fwd_ref)...);
   }
 } forwarding_ref_cpo;
 
@@ -566,7 +566,7 @@ inline constexpr struct variadic_cpo_ftor final : tincup::cpo_base<variadic_cpo_
   constexpr auto operator()(T&... variadic_args) const
     noexcept(tincup::nothrow_invocable_c<variadic_cpo_ftor, T&...>) 
     -> tincup::invocable_t<variadic_cpo_ftor, T&...> {
-    return tincup::tag_invoke_cpo(*this, variadic_args...);
+    return tag_invoke(*this, variadic_args...);
   }
 } variadic_cpo;
 

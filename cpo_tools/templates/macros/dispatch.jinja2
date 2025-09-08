@@ -106,23 +106,23 @@ constexpr auto operator()({{ arg_pairs_no_dispatch }}, {{ dispatch_info.options[
   constexpr auto operator()({{ arg_pairs }}) const
     noexcept(tincup::nothrow_invocable_c<{{ canonical_concept_args }}>) 
     -> tincup::invocable_t<{{ canonical_concept_args }}> {
-    return tincup::tag_invoke_cpo(*this, {{ arg_names }});
+    return tag_invoke(*this, {{ arg_names }});
   }
 {%- elif arg_pairs %}
   // Typed operator() overload - positive case only (concrete)  
   // Negative cases handled by tagged fallback in cpo_base
   constexpr auto operator()({{ arg_pairs }}) const
-    noexcept(noexcept(tincup::tag_invoke_cpo(*this, {{ arg_names }}))) 
-    -> decltype(tincup::tag_invoke_cpo(*this, {{ arg_names }})) {
-    return tincup::tag_invoke_cpo(*this, {{ arg_names }});
+    noexcept(noexcept(tag_invoke(*this, {{ arg_names }}))) 
+    -> decltype(tag_invoke(*this, {{ arg_names }})) {
+    return tag_invoke(*this, {{ arg_names }});
   }
 {%- else %}
   // Zero-argument CPO positive case only
   // Negative cases handled by tagged fallback in cpo_base
   constexpr auto operator()() const
-    noexcept(noexcept(tincup::tag_invoke_cpo(*this))) 
-    -> decltype(tincup::tag_invoke_cpo(*this)) {
-    return tincup::tag_invoke_cpo(*this);
+    noexcept(noexcept(tag_invoke(*this))) 
+    -> decltype(tag_invoke(*this)) {
+    return tag_invoke(*this);
   }
 {%- endif %}
 {% endmacro %}
