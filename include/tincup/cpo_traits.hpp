@@ -21,6 +21,13 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 
 namespace tincup {
 
+// External extension point for generator-provided argument metadata
+// Default: not available. Generators can specialize this for a given CPO.
+template<typename Cp, typename...Args>
+struct cpo_arg_traits {
+  static constexpr bool available = false;
+};
+
 // Prefer generator-provided metadata when available
 template<typename T, typename...As>
 concept has_generator_arg_traits_c = requires { typename T::template arg_traits<As...>; };
@@ -155,31 +162,38 @@ struct cpo_traits {
 
   // Public masks: prefer generator metadata when available
   static constexpr std::uint64_t values_mask = []{
-    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::values_mask);
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::values_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::values_mask);
     else return det_values_mask;
   }();
   static constexpr std::uint64_t pointers_mask = []{
-    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::pointers_mask);
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::pointers_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::pointers_mask);
     else return det_pointers_mask;
   }();
   static constexpr std::uint64_t lvalue_refs_mask = []{
-    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_refs_mask);
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::lvalue_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_refs_mask);
     else return det_lvalue_refs_mask;
   }();
   static constexpr std::uint64_t rvalue_refs_mask = []{
-    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::rvalue_refs_mask);
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::rvalue_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::rvalue_refs_mask);
     else return det_rvalue_refs_mask;
   }();
   static constexpr std::uint64_t lvalue_const_refs_mask = []{
-    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_const_refs_mask);
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::lvalue_const_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_const_refs_mask);
     else return det_lvalue_const_refs_mask;
   }();
   static constexpr std::uint64_t forwarding_refs_mask = []{
-    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::forwarding_refs_mask);
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::forwarding_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::forwarding_refs_mask);
     else return det_forwarding_refs_mask;
   }();
   static constexpr std::uint64_t const_qualified_mask = []{
-    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::const_qualified_mask);
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::const_qualified_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::const_qualified_mask);
     else return det_const_qualified_mask;
   }();
 

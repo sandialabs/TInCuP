@@ -427,11 +427,44 @@ cpo-generator {"cpo_name": "generic_cpo", "args": ["$T1&: arg1", "$T2&: arg2"]}
 inline constexpr struct generic_cpo_ftor final : tincup::cpo_base<generic_cpo_ftor> {
   TINCUP_CPO_TAG("generic_cpo")
   inline static constexpr bool is_variadic = false;
-
-  // Generator-provided per-argument trait masks for diagnostics and introspection
-  // These avoid fragile type-detection in client code.
+    // Typed operator() overload - positive case only (generic)
+  // Negative cases handled by tagged fallback in cpo_base
   template<typename T1, typename T2>
-  struct arg_traits {
+    requires tincup::invocable_c<generic_cpo_ftor, T1&, T2&>
+  constexpr auto operator()(T1& arg1, T2& arg2) const
+    noexcept(tincup::nothrow_invocable_c<generic_cpo_ftor, T1&, T2&>) 
+    -> tincup::invocable_t<generic_cpo_ftor, T1&, T2&> {
+    return tag_invoke(*this, arg1, arg2);
+  }
+} generic_cpo;
+
+// Note: operator() methods are provided by cpo_base
+
+// CPO-specific concepts and type aliases for convenient usage
+template<typename T1, typename T2>
+concept generic_cpo_invocable_c = tincup::invocable_c<generic_cpo_ftor, T1&, T2&>;
+
+template<typename T1, typename T2>
+concept generic_cpo_nothrow_invocable_c = tincup::nothrow_invocable_c<generic_cpo_ftor, T1&, T2&>;
+
+
+template<typename T1, typename T2>
+using generic_cpo_return_t = tincup::invocable_t<generic_cpo_ftor, T1&, T2&>;
+
+template<typename T1, typename T2>
+using generic_cpo_traits = tincup::cpo_traits<generic_cpo_ftor, T1&, T2&>;
+
+// Usage: tincup::is_invocable_v<generic_cpo_ftor, T1&, T2&>
+
+
+// External generator-provided argument trait specialization for generic_cpo
+// Forward declare primary template to allow specialization even if not included yet
+namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
+
+namespace tincup {
+  template<typename T1, typename T2>
+  struct cpo_arg_traits<generic_cpo_ftor, T1&, T2&> {
+    static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = 2;
 
@@ -486,34 +519,7 @@ inline constexpr struct generic_cpo_ftor final : tincup::cpo_base<generic_cpo_ft
       return m;
     }();
   };
-    // Typed operator() overload - positive case only (generic)
-  // Negative cases handled by tagged fallback in cpo_base
-  template<typename T1, typename T2>
-    requires tincup::invocable_c<generic_cpo_ftor, T1&, T2&>
-  constexpr auto operator()(T1& arg1, T2& arg2) const
-    noexcept(tincup::nothrow_invocable_c<generic_cpo_ftor, T1&, T2&>) 
-    -> tincup::invocable_t<generic_cpo_ftor, T1&, T2&> {
-    return tag_invoke(*this, arg1, arg2);
-  }
-} generic_cpo;
-
-// Note: operator() methods are provided by cpo_base
-
-// CPO-specific concepts and type aliases for convenient usage
-template<typename T1, typename T2>
-concept generic_cpo_invocable_c = tincup::invocable_c<generic_cpo_ftor, T1&, T2&>;
-
-template<typename T1, typename T2>
-concept generic_cpo_nothrow_invocable_c = tincup::nothrow_invocable_c<generic_cpo_ftor, T1&, T2&>;
-
-
-template<typename T1, typename T2>
-using generic_cpo_return_t = tincup::invocable_t<generic_cpo_ftor, T1&, T2&>;
-
-template<typename T1, typename T2>
-using generic_cpo_traits = tincup::cpo_traits<generic_cpo_ftor, T1&, T2&>;
-
-// Usage: tincup::is_invocable_v<generic_cpo_ftor, T1&, T2&>
+}
 ```
 
 </details>
@@ -535,10 +541,32 @@ inline constexpr struct concrete_cpo_ftor final : tincup::cpo_base<concrete_cpo_
   TINCUP_CPO_TAG("concrete_cpo")
   inline static constexpr bool is_variadic = false;
 
-  // Generator-provided per-argument trait masks for diagnostics and introspection
-  // Concrete CPOs have fixed arity; masks are constants.
-  template<typename...>
-  struct arg_traits {
+  // Typed operator() overload - positive case only (concrete)  
+  // Negative cases handled by tagged fallback in cpo_base
+  constexpr auto operator()(int value, double& ref) const
+    noexcept(noexcept(tag_invoke(*this, value, ref))) 
+    -> decltype(tag_invoke(*this, value, ref)) {
+    return tag_invoke(*this, value, ref);
+  }
+} concrete_cpo;
+
+// Note: operator() methods are provided by cpo_base
+
+// CPO-specific type aliases for convenient usage (concrete types)
+// Note: No concept aliases for concrete types - types are already known
+using concrete_cpo_return_t = tincup::invocable_t<concrete_cpo_ftor, int, double&>;
+using concrete_cpo_traits = tincup::cpo_traits<concrete_cpo_ftor, int, double&>;
+
+// Usage: tincup::is_invocable_v<concrete_cpo_ftor, int, double&>
+
+// External generator-provided argument trait specialization for concrete_cpo (concrete)
+// Forward declare primary template to allow specialization even if not included yet
+namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
+
+namespace tincup {
+  template<typename _A0, typename _A1>
+  struct cpo_arg_traits<concrete_cpo_ftor,_A0, _A1> {
+    static constexpr bool available = true;
     static constexpr std::size_t fixed_arity = 2;
     static constexpr unsigned long long values_mask = []{
       unsigned long long m = 0ull;
@@ -570,24 +598,7 @@ inline constexpr struct concrete_cpo_ftor final : tincup::cpo_base<concrete_cpo_
       return m;
     }();
   };
-
-  // Typed operator() overload - positive case only (concrete)  
-  // Negative cases handled by tagged fallback in cpo_base
-  constexpr auto operator()(int value, double& ref) const
-    noexcept(noexcept(tag_invoke(*this, value, ref))) 
-    -> decltype(tag_invoke(*this, value, ref)) {
-    return tag_invoke(*this, value, ref);
-  }
-} concrete_cpo;
-
-// Note: operator() methods are provided by cpo_base
-
-// CPO-specific type aliases for convenient usage (concrete types)
-// Note: No concept aliases for concrete types - types are already known
-using concrete_cpo_return_t = tincup::invocable_t<concrete_cpo_ftor, int, double&>;
-using concrete_cpo_traits = tincup::cpo_traits<concrete_cpo_ftor, int, double&>;
-
-// Usage: tincup::is_invocable_v<concrete_cpo_ftor, int, double&>
+}
 ```
 
 </details>
@@ -607,11 +618,44 @@ cpo-generator {"cpo_name": "forwarding_ref_cpo", "args": ["$T&&: fwd_ref"]}
 inline constexpr struct forwarding_ref_cpo_ftor final : tincup::cpo_base<forwarding_ref_cpo_ftor> {
   TINCUP_CPO_TAG("forwarding_ref_cpo")
   inline static constexpr bool is_variadic = false;
-
-  // Generator-provided per-argument trait masks for diagnostics and introspection
-  // These avoid fragile type-detection in client code.
+    // Typed operator() overload - positive case only (generic)
+  // Negative cases handled by tagged fallback in cpo_base
   template<typename T>
-  struct arg_traits {
+    requires tincup::invocable_c<forwarding_ref_cpo_ftor, T>
+  constexpr auto operator()(T&& fwd_ref) const
+    noexcept(tincup::nothrow_invocable_c<forwarding_ref_cpo_ftor, T>) 
+    -> tincup::invocable_t<forwarding_ref_cpo_ftor, T> {
+    return tag_invoke(*this, std::forward<T>(fwd_ref)...);
+  }
+} forwarding_ref_cpo;
+
+// Note: operator() methods are provided by cpo_base
+
+// CPO-specific concepts and type aliases for convenient usage
+template<typename T>
+concept forwarding_ref_cpo_invocable_c = tincup::invocable_c<forwarding_ref_cpo_ftor, T>;
+
+template<typename T>
+concept forwarding_ref_cpo_nothrow_invocable_c = tincup::nothrow_invocable_c<forwarding_ref_cpo_ftor, T>;
+
+
+template<typename T>
+using forwarding_ref_cpo_return_t = tincup::invocable_t<forwarding_ref_cpo_ftor, T>;
+
+template<typename T>
+using forwarding_ref_cpo_traits = tincup::cpo_traits<forwarding_ref_cpo_ftor, T>;
+
+// Usage: tincup::is_invocable_v<forwarding_ref_cpo_ftor, T>
+
+
+// External generator-provided argument trait specialization for forwarding_ref_cpo
+// Forward declare primary template to allow specialization even if not included yet
+namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
+
+namespace tincup {
+  template<typename T>
+  struct cpo_arg_traits<forwarding_ref_cpo_ftor, T> {
+    static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = 1;
 
@@ -666,34 +710,7 @@ inline constexpr struct forwarding_ref_cpo_ftor final : tincup::cpo_base<forward
       return m;
     }();
   };
-    // Typed operator() overload - positive case only (generic)
-  // Negative cases handled by tagged fallback in cpo_base
-  template<typename T>
-    requires tincup::invocable_c<forwarding_ref_cpo_ftor, T>
-  constexpr auto operator()(T&& fwd_ref) const
-    noexcept(tincup::nothrow_invocable_c<forwarding_ref_cpo_ftor, T>) 
-    -> tincup::invocable_t<forwarding_ref_cpo_ftor, T> {
-    return tag_invoke(*this, std::forward<T>(fwd_ref)...);
-  }
-} forwarding_ref_cpo;
-
-// Note: operator() methods are provided by cpo_base
-
-// CPO-specific concepts and type aliases for convenient usage
-template<typename T>
-concept forwarding_ref_cpo_invocable_c = tincup::invocable_c<forwarding_ref_cpo_ftor, T>;
-
-template<typename T>
-concept forwarding_ref_cpo_nothrow_invocable_c = tincup::nothrow_invocable_c<forwarding_ref_cpo_ftor, T>;
-
-
-template<typename T>
-using forwarding_ref_cpo_return_t = tincup::invocable_t<forwarding_ref_cpo_ftor, T>;
-
-template<typename T>
-using forwarding_ref_cpo_traits = tincup::cpo_traits<forwarding_ref_cpo_ftor, T>;
-
-// Usage: tincup::is_invocable_v<forwarding_ref_cpo_ftor, T>
+}
 ```
 
 </details>
@@ -713,11 +730,44 @@ cpo-generator {"cpo_name": "variadic_cpo", "args": ["$T&...: variadic_args"]}
 inline constexpr struct variadic_cpo_ftor final : tincup::cpo_base<variadic_cpo_ftor> {
   TINCUP_CPO_TAG("variadic_cpo")
   inline static constexpr bool is_variadic = true;
-
-  // Generator-provided per-argument trait masks for diagnostics and introspection
-  // These avoid fragile type-detection in client code.
+    // Typed operator() overload - positive case only (generic)
+  // Negative cases handled by tagged fallback in cpo_base
   template<typename... T>
-  struct arg_traits {
+    requires tincup::invocable_c<variadic_cpo_ftor, T&...>
+  constexpr auto operator()(T&... variadic_args) const
+    noexcept(tincup::nothrow_invocable_c<variadic_cpo_ftor, T&...>) 
+    -> tincup::invocable_t<variadic_cpo_ftor, T&...> {
+    return tag_invoke(*this, variadic_args...);
+  }
+} variadic_cpo;
+
+// Note: operator() methods are provided by cpo_base
+
+// CPO-specific concepts and type aliases for convenient usage
+template<typename... T>
+concept variadic_cpo_invocable_c = tincup::invocable_c<variadic_cpo_ftor, T&...>;
+
+template<typename... T>
+concept variadic_cpo_nothrow_invocable_c = tincup::nothrow_invocable_c<variadic_cpo_ftor, T&...>;
+
+
+template<typename... T>
+using variadic_cpo_return_t = tincup::invocable_t<variadic_cpo_ftor, T&...>;
+
+template<typename... T>
+using variadic_cpo_traits = tincup::cpo_traits<variadic_cpo_ftor, T&...>;
+
+// Usage: tincup::is_invocable_v<variadic_cpo_ftor, T&...>
+
+
+// External generator-provided argument trait specialization for variadic_cpo
+// Forward declare primary template to allow specialization even if not included yet
+namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
+
+namespace tincup {
+  template<typename... T>
+  struct cpo_arg_traits<variadic_cpo_ftor, T&...> {
+    static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = 0;
 
@@ -774,34 +824,7 @@ inline constexpr struct variadic_cpo_ftor final : tincup::cpo_base<variadic_cpo_
       return m;
     }();
   };
-    // Typed operator() overload - positive case only (generic)
-  // Negative cases handled by tagged fallback in cpo_base
-  template<typename... T>
-    requires tincup::invocable_c<variadic_cpo_ftor, T&...>
-  constexpr auto operator()(T&... variadic_args) const
-    noexcept(tincup::nothrow_invocable_c<variadic_cpo_ftor, T&...>) 
-    -> tincup::invocable_t<variadic_cpo_ftor, T&...> {
-    return tag_invoke(*this, variadic_args...);
-  }
-} variadic_cpo;
-
-// Note: operator() methods are provided by cpo_base
-
-// CPO-specific concepts and type aliases for convenient usage
-template<typename... T>
-concept variadic_cpo_invocable_c = tincup::invocable_c<variadic_cpo_ftor, T&...>;
-
-template<typename... T>
-concept variadic_cpo_nothrow_invocable_c = tincup::nothrow_invocable_c<variadic_cpo_ftor, T&...>;
-
-
-template<typename... T>
-using variadic_cpo_return_t = tincup::invocable_t<variadic_cpo_ftor, T&...>;
-
-template<typename... T>
-using variadic_cpo_traits = tincup::cpo_traits<variadic_cpo_ftor, T&...>;
-
-// Usage: tincup::is_invocable_v<variadic_cpo_ftor, T&...>
+}
 ```
 
 </details>
@@ -820,66 +843,7 @@ cpo-generator {"cpo_name": "conditional_process", "args": ["$T&: data"], "runtim
 ```cpp
 inline constexpr struct conditional_process_ftor final : tincup::cpo_base<conditional_process_ftor> {
   TINCUP_CPO_TAG("conditional_process")
-  inline static constexpr bool is_variadic = false;
-
-  // Generator-provided per-argument trait masks for diagnostics and introspection
-  // These avoid fragile type-detection in client code.
-  template<typename T>
-  struct arg_traits {
-    // Fixed (non-pack) argument count
-    static constexpr std::size_t fixed_arity = 1;
-
-    // Helpers to build repeated masks for parameter packs
-    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
-      unsigned long long m = 0ull;
-      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
-      return m;
-    }
-
-    // Values mask
-    static constexpr unsigned long long values_mask = []{
-      unsigned long long m = 0ull;
-      // Fixed positions
-      // Pack positions
-      return m;
-    }();
-
-    // Pointers mask
-    static constexpr unsigned long long pointers_mask = []{
-      unsigned long long m = 0ull;
-      return m;
-    }();
-
-    // Lvalue refs mask
-    static constexpr unsigned long long lvalue_refs_mask = []{
-      unsigned long long m = 0ull;
- m |= (1ull << 0);       return m;
-    }();
-
-    // Rvalue refs mask (non-forwarding)
-    static constexpr unsigned long long rvalue_refs_mask = []{
-      unsigned long long m = 0ull;
-      return m;
-    }();
-
-    // Forwarding refs mask
-    static constexpr unsigned long long forwarding_refs_mask = []{
-      unsigned long long m = 0ull;
-      return m;
-    }();
-
-    // Lvalue const refs mask
-    static constexpr unsigned long long lvalue_const_refs_mask = []{
-      unsigned long long m = 0ull;
-      return m;
-    }();
-
-    // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr unsigned long long const_qualified_mask = []{
-      unsigned long long m = 0ull;
-      return m;
-    }();
-  };  
+  inline static constexpr bool is_variadic = false;  
   static constexpr struct fast_tag {} fast;
   static constexpr struct safe_tag {} safe;
 
@@ -934,39 +898,16 @@ template<typename T>
 using conditional_process_traits = tincup::cpo_traits<conditional_process_ftor, T&>;
 
 // Usage: tincup::is_invocable_v<conditional_process_ftor, T&>
-```
 
-**Usage:**
-```cpp
-// Runtime usage with compile-time optimization
-auto result = conditional_process(data, runtime_flag);
 
-// Direct compile-time usage
-auto result = conditional_process(data, conditional_process_ftor::fast{});
-```
+// External generator-provided argument trait specialization for conditional_process
+// Forward declare primary template to allow specialization even if not included yet
+namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
 
-</details>
-
-<details>
-<summary><strong>String Dispatch CPO</strong></summary>
-
-A CPO with runtime string dispatch that converts string selection into compile-time specialization
-
-**Command:**
-```bash
-cpo-generator {"cpo_name": "compression_method", "args": ["$const T&: input"], "runtime_dispatch": {"type": "string", "dispatch_arg": "algorithm", "options": ["lz4", "zstd", "gzip"]}}
-```
-
-**Generated Code:**
-```cpp
-inline constexpr struct compression_method_ftor final : tincup::cpo_base<compression_method_ftor> {
-  TINCUP_CPO_TAG("compression_method")
-  inline static constexpr bool is_variadic = false;
-
-  // Generator-provided per-argument trait masks for diagnostics and introspection
-  // These avoid fragile type-detection in client code.
+namespace tincup {
   template<typename T>
-  struct arg_traits {
+  struct cpo_arg_traits<conditional_process_ftor, T&> {
+    static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = 1;
 
@@ -1012,15 +953,44 @@ inline constexpr struct compression_method_ftor final : tincup::cpo_base<compres
     // Lvalue const refs mask
     static constexpr unsigned long long lvalue_const_refs_mask = []{
       unsigned long long m = 0ull;
- m |= (1ull << 0);       return m;
+      return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
     static constexpr unsigned long long const_qualified_mask = []{
       unsigned long long m = 0ull;
- m |= (1ull << 0);       return m;
+      return m;
     }();
-  };   
+  };
+}
+```
+
+**Usage:**
+```cpp
+// Runtime usage with compile-time optimization
+auto result = conditional_process(data, runtime_flag);
+
+// Direct compile-time usage
+auto result = conditional_process(data, conditional_process_ftor::fast{});
+```
+
+</details>
+
+<details>
+<summary><strong>String Dispatch CPO</strong></summary>
+
+A CPO with runtime string dispatch that converts string selection into compile-time specialization
+
+**Command:**
+```bash
+cpo-generator {"cpo_name": "compression_method", "args": ["$const T&: input"], "runtime_dispatch": {"type": "string", "dispatch_arg": "algorithm", "options": ["lz4", "zstd", "gzip"]}}
+```
+
+**Generated Code:**
+```cpp
+inline constexpr struct compression_method_ftor final : tincup::cpo_base<compression_method_ftor> {
+  TINCUP_CPO_TAG("compression_method")
+  inline static constexpr bool is_variadic = false;   
   static constexpr struct lz4_tag {} lz4; 
   static constexpr struct zstd_tag {} zstd; 
   static constexpr struct gzip_tag {} gzip;
@@ -1098,6 +1068,71 @@ template<typename T>
 using compression_method_traits = tincup::cpo_traits<compression_method_ftor, const T&>;
 
 // Usage: tincup::is_invocable_v<compression_method_ftor, const T&>
+
+
+// External generator-provided argument trait specialization for compression_method
+// Forward declare primary template to allow specialization even if not included yet
+namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
+
+namespace tincup {
+  template<typename T>
+  struct cpo_arg_traits<compression_method_ftor, const T&> {
+    static constexpr bool available = true;
+    // Fixed (non-pack) argument count
+    static constexpr std::size_t fixed_arity = 1;
+
+    // Helpers to build repeated masks for parameter packs
+    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
+      unsigned long long m = 0ull;
+      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+      return m;
+    }
+
+    // Values mask
+    static constexpr unsigned long long values_mask = []{
+      unsigned long long m = 0ull;
+      // Fixed positions
+      // Pack positions
+      return m;
+    }();
+
+    // Pointers mask
+    static constexpr unsigned long long pointers_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue refs mask
+    static constexpr unsigned long long lvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);       return m;
+    }();
+
+    // Rvalue refs mask (non-forwarding)
+    static constexpr unsigned long long rvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Forwarding refs mask
+    static constexpr unsigned long long forwarding_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue const refs mask
+    static constexpr unsigned long long lvalue_const_refs_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);       return m;
+    }();
+
+    // Const-qualified mask (applies to values, refs, or pointers where declared const)
+    static constexpr unsigned long long const_qualified_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);       return m;
+    }();
+  };
+}
 ```
 
 **Usage:**
