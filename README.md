@@ -625,7 +625,7 @@ inline constexpr struct forwarding_ref_cpo_ftor final : tincup::cpo_base<forward
   constexpr auto operator()(T&& fwd_ref) const
     noexcept(tincup::nothrow_invocable_c<forwarding_ref_cpo_ftor, T>) 
     -> tincup::invocable_t<forwarding_ref_cpo_ftor, T> {
-    return tag_invoke(*this, std::forward<T>(fwd_ref)...);
+    return tag_invoke(*this, std::forward<T>(fwd_ref));
   }
 } forwarding_ref_cpo;
 

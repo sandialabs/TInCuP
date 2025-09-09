@@ -116,14 +116,17 @@ def process_input(input_data, generate_doxygen_cli, template_env: Environment):
     for pair_str in final_arg_pairs:
         try:
             full_type, name = [part.strip() for part in pair_str.rsplit(":", 1)]
-            is_generic = full_type.startswith("$")
+            # Detect a generic token anywhere in the type (e.g., 'const $Vs&...')
+            is_generic = ("$" in full_type)
             is_variadic = "..." in full_type
             is_forwarding_ref = False
 
             arg_data = {"name": name, "is_variadic": is_variadic}
 
             if is_generic:
-                type_name = full_type[1:]
+                # Extract the generic name starting at the first '$'
+                dollar_idx = full_type.find("$")
+                type_name = full_type[dollar_idx + 1:]
                 base_type = parse_cpp_type(type_name)
                 arg_data["base"] = base_type
 
@@ -134,9 +137,11 @@ def process_input(input_data, generate_doxygen_cli, template_env: Environment):
 
                 if type_name.strip().endswith(("&&", "&&...")):
                     is_forwarding_ref = True
+                    # Normalize forwarding ref to base&& (quals collapse at forwarding site)
                     arg_data["full"] = base_type + "&&"
                 else:
-                    arg_data["full"] = type_name.replace("...", "")
+                    # Remove '$Name' and '...' but preserve any qualifiers from full_type
+                    arg_data["full"] = full_type.replace("...", "").replace("$" + base_type, base_type)
             else:
                 # Disallow named packs without '$' (e.g., 'Rest...')
                 if is_variadic and re.search(r"[A-Za-z_][A-Za-z0-9_]*\s*\.\.\.", full_type):
@@ -183,7 +188,7 @@ def process_input(input_data, generate_doxygen_cli, template_env: Environment):
     arg_names_str = ", ".join(
         [
             (
-                f"std::forward<{arg['base']}>({arg['name']}){'...' if arg['is_forwarding'] else ''}"
+                f"std::forward<{arg['base']}>({arg['name']}){'...' if arg['is_variadic'] else ''}"
                 if arg["is_forwarding"]
                 else f"{arg['name']}{'...' if arg['is_variadic'] else ''}"
             )

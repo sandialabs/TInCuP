@@ -59,23 +59,23 @@ struct size_constant {
 };
 
 /**
- * @class Increment
+ * @class increment
  * @brief A template class for incrementing compile-time values.
  * @tparam T The type to be incremented.
  * @details This class template provides a mechanism to increment compile-time
  * values, particularly useful for template metaprogramming.
  */
-template<class> struct Increment;
+template<class> struct increment;
 
 /**
- * @class Increment<T<I>>
- * @brief Specialization of Increment for template types with a size_t parameter.
+ * @class increment<T<I>>
+ * @brief Specialization of increment for template types with a size_t parameter.
  * @tparam T The template class to be incremented.
  * @tparam I The current value to be incremented.
  * @details This specialization increments the value I by 1 in the resulting type.
  */
 template<template<std::size_t> class T, std::size_t I> 
-struct Increment<T<I>> {
+struct increment<T<I>> {
   using type = T<I+1>;
 };
 
@@ -85,9 +85,9 @@ struct Increment<T<I>> {
  * @brief Convenience alias for accessing the incremented type.
  * @tparam T The type to be incremented.
  * @details This alias template provides a shorthand for accessing the
- * incremented type defined by the Increment class template.
+ * incremented type defined by the increment class template.
  */
 template<class T>
-using increment_t = typename Increment<T>::type;
+using increment_t = typename increment<T>::type;
 
 } // namespace tincup
