@@ -9,6 +9,134 @@
 inline constexpr struct {{ cpo_name }}_ftor final : tincup::cpo_base<{{ cpo_name }}_ftor> {
   TINCUP_CPO_TAG("{{ cpo_name }}")
   inline static constexpr bool is_variadic = {{ 'true' if has_variadic else 'false' }};
+
+  // Generator-provided per-argument trait masks for diagnostics and introspection
+  // These avoid fragile type-detection in client code.
+  template<{{ arg_types }}>
+  struct arg_traits {
+    // Fixed (non-pack) argument count
+    static constexpr std::size_t fixed_arity = {{ args | selectattr('is_variadic', 'equalto', False) | list | length }};
+
+    // Helpers to build repeated masks for parameter packs
+    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
+      unsigned long long m = 0ull;
+      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+      return m;
+    }
+
+    // Values mask
+    static constexpr unsigned long long values_mask = []{
+      unsigned long long m = 0ull;
+      // Fixed positions
+      {% for a in args %}
+        {% if not a.is_variadic %}
+          {% set full = a.full %}
+          {% set has_ref = '&' in full %}
+          {% set has_ptr = '*' in full %}
+          {% if (not has_ref) and (not has_ptr) %}
+          m |= (1ull << {{ loop.index0 }});
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      // Pack positions
+      {% set pack = (args | selectattr('is_variadic') | list | first if has_variadic else None) %}
+      {% if has_variadic and pack %}
+        // For packs, category is determined by the declared form of the pack
+        {% set pfull = pack.full %}
+        {% set p_has_ref = '&' in pfull %}
+        {% set p_has_rref = '&&' in pfull %}
+        {% set p_has_ptr = '*' in pfull %}
+        {% if (not p_has_ref) and (not p_has_ptr) %}
+        m |= repeat_mask(fixed_arity, sizeof...({{ pack.base }}));
+        {% endif %}
+      {% endif %}
+      return m;
+    }();
+
+    // Pointers mask
+    static constexpr unsigned long long pointers_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if not a.is_variadic %}
+          {% if '*' in a.full %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if has_variadic and pack and ('*' in pack.full) %}
+        m |= repeat_mask(fixed_arity, sizeof...({{ pack.base }}));
+      {% endif %}
+      return m;
+    }();
+
+    // Lvalue refs mask
+    static constexpr unsigned long long lvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if not a.is_variadic %}
+          {% if ('&' in a.full) and ('&&' not in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if has_variadic and pack and (('&' in pack.full) and ('&&' not in pack.full)) %}
+        m |= repeat_mask(fixed_arity, sizeof...({{ pack.base }}));
+      {% endif %}
+      return m;
+    }();
+
+    // Rvalue refs mask (non-forwarding)
+    static constexpr unsigned long long rvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if not a.is_variadic %}
+          {% if ('&&' in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if has_variadic and pack and ('&&' in pack.full) and (not pack.is_forwarding) %}
+        m |= repeat_mask(fixed_arity, sizeof...({{ pack.base }}));
+      {% endif %}
+      return m;
+    }();
+
+    // Forwarding refs mask
+    static constexpr unsigned long long forwarding_refs_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if not a.is_variadic %}
+          {% if ('&&' in a.full) and a.is_forwarding %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if has_variadic and pack and ('&&' in pack.full) and pack.is_forwarding %}
+        m |= repeat_mask(fixed_arity, sizeof...({{ pack.base }}));
+      {% endif %}
+      return m;
+    }();
+
+    // Lvalue const refs mask
+    static constexpr unsigned long long lvalue_const_refs_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if not a.is_variadic %}
+          {% if ('&' in a.full) and ('&&' not in a.full) and ('const' in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if has_variadic and pack and (('&' in pack.full) and ('&&' not in pack.full) and ('const' in pack.full)) %}
+        m |= repeat_mask(fixed_arity, sizeof...({{ pack.base }}));
+      {% endif %}
+      return m;
+    }();
+
+    // Const-qualified mask (applies to values, refs, or pointers where declared const)
+    static constexpr unsigned long long const_qualified_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if not a.is_variadic %}
+          {% if 'const' in a.full %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if has_variadic and pack and ('const' in pack.full) %}
+        m |= repeat_mask(fixed_arity, sizeof...({{ pack.base }}));
+      {% endif %}
+      return m;
+    }();
+  };
 {%- if dispatch_info and dispatch_info.type == 'bool' %}
   {{ boolean_dispatch(cpo_name, dispatch_info, arg_types, arg_pairs, arg_names, concept_types, arg_pairs_no_dispatch, arg_names_no_dispatch, concept_types_no_dispatch) }}
 {%- elif dispatch_info and dispatch_info.type == 'string' %}

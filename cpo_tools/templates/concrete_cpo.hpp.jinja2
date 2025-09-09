@@ -6,6 +6,67 @@ inline constexpr struct {{ cpo_name }}_ftor final : tincup::cpo_base<{{ cpo_name
   TINCUP_CPO_TAG("{{ cpo_name }}")
   inline static constexpr bool is_variadic = {{ 'true' if has_variadic else 'false' }};
 
+  // Generator-provided per-argument trait masks for diagnostics and introspection
+  // Concrete CPOs have fixed arity; masks are constants.
+  template<typename...>
+  struct arg_traits {
+    static constexpr std::size_t fixed_arity = {{ args | length }};
+    static constexpr unsigned long long values_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% set full = a.full %}
+        {% set has_ref = '&' in full %}
+        {% set has_ptr = '*' in full %}
+        {% if (not has_ref) and (not has_ptr) %}
+        m |= (1ull << {{ loop.index0 }});
+        {% endif %}
+      {% endfor %}
+      return m;
+    }();
+    static constexpr unsigned long long pointers_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if '*' in a.full %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+      {% endfor %}
+      return m;
+    }();
+    static constexpr unsigned long long lvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if ('&' in a.full) and ('&&' not in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+      {% endfor %}
+      return m;
+    }();
+    static constexpr unsigned long long rvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if ('&&' in a.full) and (not a.is_forwarding) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+      {% endfor %}
+      return m;
+    }();
+    static constexpr unsigned long long forwarding_refs_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if ('&&' in a.full) and a.is_forwarding %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+      {% endfor %}
+      return m;
+    }();
+    static constexpr unsigned long long lvalue_const_refs_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if ('&' in a.full) and ('&&' not in a.full) and ('const' in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+      {% endfor %}
+      return m;
+    }();
+    static constexpr unsigned long long const_qualified_mask = []{
+      unsigned long long m = 0ull;
+      {% for a in args %}
+        {% if 'const' in a.full %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+      {% endfor %}
+      return m;
+    }();
+  };
+
 {{ typed_operator_overloads(cpo_name, "", arg_pairs, arg_names, concept_types, canonical_concept_args) }}
 } {{ cpo_name }};
 

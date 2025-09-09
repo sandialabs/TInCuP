@@ -427,6 +427,65 @@ cpo-generator {"cpo_name": "generic_cpo", "args": ["$T1&: arg1", "$T2&: arg2"]}
 inline constexpr struct generic_cpo_ftor final : tincup::cpo_base<generic_cpo_ftor> {
   TINCUP_CPO_TAG("generic_cpo")
   inline static constexpr bool is_variadic = false;
+
+  // Generator-provided per-argument trait masks for diagnostics and introspection
+  // These avoid fragile type-detection in client code.
+  template<typename T1, typename T2>
+  struct arg_traits {
+    // Fixed (non-pack) argument count
+    static constexpr std::size_t fixed_arity = 2;
+
+    // Helpers to build repeated masks for parameter packs
+    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
+      unsigned long long m = 0ull;
+      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+      return m;
+    }
+
+    // Values mask
+    static constexpr unsigned long long values_mask = []{
+      unsigned long long m = 0ull;
+      // Fixed positions
+      // Pack positions
+      return m;
+    }();
+
+    // Pointers mask
+    static constexpr unsigned long long pointers_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue refs mask
+    static constexpr unsigned long long lvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);  m |= (1ull << 1);       return m;
+    }();
+
+    // Rvalue refs mask (non-forwarding)
+    static constexpr unsigned long long rvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Forwarding refs mask
+    static constexpr unsigned long long forwarding_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue const refs mask
+    static constexpr unsigned long long lvalue_const_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Const-qualified mask (applies to values, refs, or pointers where declared const)
+    static constexpr unsigned long long const_qualified_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+  };
     // Typed operator() overload - positive case only (generic)
   // Negative cases handled by tagged fallback in cpo_base
   template<typename T1, typename T2>
@@ -476,6 +535,42 @@ inline constexpr struct concrete_cpo_ftor final : tincup::cpo_base<concrete_cpo_
   TINCUP_CPO_TAG("concrete_cpo")
   inline static constexpr bool is_variadic = false;
 
+  // Generator-provided per-argument trait masks for diagnostics and introspection
+  // Concrete CPOs have fixed arity; masks are constants.
+  template<typename...>
+  struct arg_traits {
+    static constexpr std::size_t fixed_arity = 2;
+    static constexpr unsigned long long values_mask = []{
+      unsigned long long m = 0ull;
+        m |= (1ull << 0);
+      return m;
+    }();
+    static constexpr unsigned long long pointers_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+    static constexpr unsigned long long lvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 1);       return m;
+    }();
+    static constexpr unsigned long long rvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+    static constexpr unsigned long long forwarding_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+    static constexpr unsigned long long lvalue_const_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+    static constexpr unsigned long long const_qualified_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+  };
+
   // Typed operator() overload - positive case only (concrete)  
   // Negative cases handled by tagged fallback in cpo_base
   constexpr auto operator()(int value, double& ref) const
@@ -512,6 +607,65 @@ cpo-generator {"cpo_name": "forwarding_ref_cpo", "args": ["$T&&: fwd_ref"]}
 inline constexpr struct forwarding_ref_cpo_ftor final : tincup::cpo_base<forwarding_ref_cpo_ftor> {
   TINCUP_CPO_TAG("forwarding_ref_cpo")
   inline static constexpr bool is_variadic = false;
+
+  // Generator-provided per-argument trait masks for diagnostics and introspection
+  // These avoid fragile type-detection in client code.
+  template<typename T>
+  struct arg_traits {
+    // Fixed (non-pack) argument count
+    static constexpr std::size_t fixed_arity = 1;
+
+    // Helpers to build repeated masks for parameter packs
+    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
+      unsigned long long m = 0ull;
+      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+      return m;
+    }
+
+    // Values mask
+    static constexpr unsigned long long values_mask = []{
+      unsigned long long m = 0ull;
+      // Fixed positions
+      // Pack positions
+      return m;
+    }();
+
+    // Pointers mask
+    static constexpr unsigned long long pointers_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue refs mask
+    static constexpr unsigned long long lvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Rvalue refs mask (non-forwarding)
+    static constexpr unsigned long long rvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);       return m;
+    }();
+
+    // Forwarding refs mask
+    static constexpr unsigned long long forwarding_refs_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);       return m;
+    }();
+
+    // Lvalue const refs mask
+    static constexpr unsigned long long lvalue_const_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Const-qualified mask (applies to values, refs, or pointers where declared const)
+    static constexpr unsigned long long const_qualified_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+  };
     // Typed operator() overload - positive case only (generic)
   // Negative cases handled by tagged fallback in cpo_base
   template<typename T>
@@ -559,6 +713,67 @@ cpo-generator {"cpo_name": "variadic_cpo", "args": ["$T&...: variadic_args"]}
 inline constexpr struct variadic_cpo_ftor final : tincup::cpo_base<variadic_cpo_ftor> {
   TINCUP_CPO_TAG("variadic_cpo")
   inline static constexpr bool is_variadic = true;
+
+  // Generator-provided per-argument trait masks for diagnostics and introspection
+  // These avoid fragile type-detection in client code.
+  template<typename... T>
+  struct arg_traits {
+    // Fixed (non-pack) argument count
+    static constexpr std::size_t fixed_arity = 0;
+
+    // Helpers to build repeated masks for parameter packs
+    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
+      unsigned long long m = 0ull;
+      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+      return m;
+    }
+
+    // Values mask
+    static constexpr unsigned long long values_mask = []{
+      unsigned long long m = 0ull;
+      // Fixed positions
+      // Pack positions
+        // For packs, category is determined by the declared form of the pack
+      return m;
+    }();
+
+    // Pointers mask
+    static constexpr unsigned long long pointers_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue refs mask
+    static constexpr unsigned long long lvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+        m |= repeat_mask(fixed_arity, sizeof...(T));
+      return m;
+    }();
+
+    // Rvalue refs mask (non-forwarding)
+    static constexpr unsigned long long rvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Forwarding refs mask
+    static constexpr unsigned long long forwarding_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue const refs mask
+    static constexpr unsigned long long lvalue_const_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Const-qualified mask (applies to values, refs, or pointers where declared const)
+    static constexpr unsigned long long const_qualified_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+  };
     // Typed operator() overload - positive case only (generic)
   // Negative cases handled by tagged fallback in cpo_base
   template<typename... T>
@@ -605,7 +820,66 @@ cpo-generator {"cpo_name": "conditional_process", "args": ["$T&: data"], "runtim
 ```cpp
 inline constexpr struct conditional_process_ftor final : tincup::cpo_base<conditional_process_ftor> {
   TINCUP_CPO_TAG("conditional_process")
-  inline static constexpr bool is_variadic = false;  
+  inline static constexpr bool is_variadic = false;
+
+  // Generator-provided per-argument trait masks for diagnostics and introspection
+  // These avoid fragile type-detection in client code.
+  template<typename T>
+  struct arg_traits {
+    // Fixed (non-pack) argument count
+    static constexpr std::size_t fixed_arity = 1;
+
+    // Helpers to build repeated masks for parameter packs
+    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
+      unsigned long long m = 0ull;
+      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+      return m;
+    }
+
+    // Values mask
+    static constexpr unsigned long long values_mask = []{
+      unsigned long long m = 0ull;
+      // Fixed positions
+      // Pack positions
+      return m;
+    }();
+
+    // Pointers mask
+    static constexpr unsigned long long pointers_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue refs mask
+    static constexpr unsigned long long lvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);       return m;
+    }();
+
+    // Rvalue refs mask (non-forwarding)
+    static constexpr unsigned long long rvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Forwarding refs mask
+    static constexpr unsigned long long forwarding_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue const refs mask
+    static constexpr unsigned long long lvalue_const_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Const-qualified mask (applies to values, refs, or pointers where declared const)
+    static constexpr unsigned long long const_qualified_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+  };  
   static constexpr struct fast_tag {} fast;
   static constexpr struct safe_tag {} safe;
 
@@ -687,7 +961,66 @@ cpo-generator {"cpo_name": "compression_method", "args": ["$const T&: input"], "
 ```cpp
 inline constexpr struct compression_method_ftor final : tincup::cpo_base<compression_method_ftor> {
   TINCUP_CPO_TAG("compression_method")
-  inline static constexpr bool is_variadic = false;   
+  inline static constexpr bool is_variadic = false;
+
+  // Generator-provided per-argument trait masks for diagnostics and introspection
+  // These avoid fragile type-detection in client code.
+  template<typename T>
+  struct arg_traits {
+    // Fixed (non-pack) argument count
+    static constexpr std::size_t fixed_arity = 1;
+
+    // Helpers to build repeated masks for parameter packs
+    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
+      unsigned long long m = 0ull;
+      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+      return m;
+    }
+
+    // Values mask
+    static constexpr unsigned long long values_mask = []{
+      unsigned long long m = 0ull;
+      // Fixed positions
+      // Pack positions
+      return m;
+    }();
+
+    // Pointers mask
+    static constexpr unsigned long long pointers_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue refs mask
+    static constexpr unsigned long long lvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);       return m;
+    }();
+
+    // Rvalue refs mask (non-forwarding)
+    static constexpr unsigned long long rvalue_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Forwarding refs mask
+    static constexpr unsigned long long forwarding_refs_mask = []{
+      unsigned long long m = 0ull;
+      return m;
+    }();
+
+    // Lvalue const refs mask
+    static constexpr unsigned long long lvalue_const_refs_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);       return m;
+    }();
+
+    // Const-qualified mask (applies to values, refs, or pointers where declared const)
+    static constexpr unsigned long long const_qualified_mask = []{
+      unsigned long long m = 0ull;
+ m |= (1ull << 0);       return m;
+    }();
+  };   
   static constexpr struct lz4_tag {} lz4; 
   static constexpr struct zstd_tag {} zstd; 
   static constexpr struct gzip_tag {} gzip;

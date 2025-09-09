@@ -223,6 +223,8 @@ def process_input(input_data, generate_doxygen_cli, template_env: Environment):
         "concept_types": concept_types_str,
         "canonical_concept_args": canonical_concept_args,
         "has_variadic": has_variadic,
+        # Provide parsed per-argument metadata to templates
+        "args": parsed_args,
         "semantic_info": semantic_info,
         "is_llm_mode": is_llm_mode,
         "dispatch_info": dispatch_info,

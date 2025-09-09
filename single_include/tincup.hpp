@@ -12,10 +12,14 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 
 #include <algorithm>
 #include <array>
+#include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <string_view>
+#include <tuple>
 #include <type_traits>
+#include <typeindex>
 #include <utility>
 
 namespace tincup {
@@ -592,7 +596,382 @@ concept returns_value_c = cpo_c<Cp> && (!Cp::template valid_return_type<std::is_
 
 
 
+/**
+ * @file type_list.hpp
+ * @brief Defines compile time type container and associated template metaprogramming utilities
+ */
 
+/**
+ * @file type_utils.hpp
+ * @brief Collection of simple template metaprogramming components 
+ */
+
+// Intentionally header-only; keep dependencies minimal
+
+namespace tincup {
+
+/**
+ * @class size_constant
+ * @brief A type equivalent to a whole number.
+ * @tparam N The compile-time constant value of type std::size_t.
+ * @details
+ * This trait provides a convenient way to create compile-time size constants.
+ * It is equivalent to std::integral_constant<std::size_t, N>.
+ *
+ * @note size_constant<N>::value is a constant expression of type std::size_t with value N.
+ * @note size_constant<N> is an empty, trivial type that can be used as a tag.
+ *
+ * @par Example:
+ * @code
+ * // Define a compile-time size constant
+ * using Five = size_constant<5>;
+ * 
+ * // Use in a template function
+ * template<typename T, typename N>
+ * struct Array {
+ *     T data[N::value];
+ * };
+ * 
+ * // Usage
+ * Array<int, Five> arr; // Array of 5 integers
+ * 
+ * // Use in a constexpr context
+ * constexpr std::size_t ten = size_constant<10>::value;
+ * @endcode
+ *
+ * @see std::integral_constant
+ */
+template<std::size_t N>
+struct size_constant {
+  static constexpr std::size_t value = N;
+};
+
+/**
+ * @class Increment
+ * @brief A template class for incrementing compile-time values.
+ * @tparam T The type to be incremented.
+ * @details This class template provides a mechanism to increment compile-time
+ * values, particularly useful for template metaprogramming.
+ */
+template<class> struct Increment;
+
+/**
+ * @class Increment<T<I>>
+ * @brief Specialization of Increment for template types with a size_t parameter.
+ * @tparam T The template class to be incremented.
+ * @tparam I The current value to be incremented.
+ * @details This specialization increments the value I by 1 in the resulting type.
+ */
+template<template<std::size_t> class T, std::size_t I> 
+struct Increment<T<I>> {
+  using type = T<I+1>;
+};
+
+/**
+ * @typedef increment_t
+ * @brief Convenience alias for accessing the incremented type.
+ * @tparam T The type to be incremented.
+ * @details This alias template provides a shorthand for accessing the
+ * incremented type defined by the Increment class template.
+ */
+template<class T>
+using increment_t = typename Increment<T>::type;
+
+} // namespace tincup
+
+namespace tincup {
+
+/**
+ * @brief A helper type trait for finding the index of a given type in variadic parameter pack
+ */
+template<class, class...>
+struct IndexOf;
+
+template<class First, class Second, class... Rest>
+struct IndexOf<First, Second, Rest...> : std::conditional_t<std::is_same_v<std::remove_cvref_t<First>, std::remove_cvref_t<Second>>,
+                                                            size_constant<0>,
+                                                            size_constant<1 + IndexOf<First, Rest...>::value>> {};
+
+template<class T>
+struct IndexOf<T> : size_constant<0> {};
+
+template<class...> struct TypeList;
+
+namespace detail {
+template<class> 
+struct IsTypeList : std::false_type {};
+
+template<class...Ts>
+struct IsTypeList<TypeList<Ts...>> : std::true_type {};
+};
+
+/**
+ * @concept type_list_c
+ * @brief Concept for types that satisfy the TypeList interface.
+ */
+template<class TL>
+concept type_list_c = detail::IsTypeList<TL>::value;
+
+template<class TL>
+concept unique_type_list_c = type_list_c<TL> && TL::is_unique;
+
+template<class TL>
+concept nonempty_type_list_c = type_list_c<TL> && (TL::size > 0);
+                             
+
+/**
+ * @class TypeListElement
+ * @brief Retrieves the type at a specific index in a TypeList.
+ *
+ * @tparam I The index to retrieve.
+ * @tparam TL The TypeList to retrieve from.
+ */
+template<std::size_t, type_list_c>
+struct TypeListElement;
+
+/**
+ * @class TypeListElement<0u,TypeList<First,Rest...>> 
+ * @brief Specialization for retrieving the first element of a TypeList.
+ *
+ * @tparam First The first type in the list.
+ * @tparam Rest The remaining types in the list.
+ */
+template<class First, class...Rest>
+struct TypeListElement<0u,TypeList<First,Rest...>> {
+  using type = First;
+};
+
+/**
+ * @class TypeListElement<I,TypeList<First,Rest...>> 
+ * @brief Specialization for retrieving a non-first element of a TypeList.
+ *
+ * @tparam I The index to retrieve.
+ * @tparam First The first type in the list.
+ * @tparam Rest The remaining types in the list.
+ */
+template<std::size_t I, class First, class...Rest>
+requires (I > 0 && I <= sizeof...(Rest))
+struct TypeListElement<I,TypeList<First,Rest...>> {
+  using type = typename TypeListElement<I-1u,TypeList<Rest...>>::type;
+};
+
+/**
+ * @class TypeListElement<I,TypeList<Ts...>> 
+ * @brief Specialization for handling out-of-bounds indices.
+ *
+ * @tparam I The index to retrieve.
+ * @tparam Ts The types in the list.
+ */
+template<std::size_t I, class...Ts>
+requires (I > sizeof...(Ts))
+struct TypeListElement<I,TypeList<Ts...>> {
+  // This will cause a compile-time error when accessed
+  static_assert(I <= sizeof...(Ts), "Index out of bounds in TypeList");
+};
+// Note: pop_front is available as a member alias on TypeList
+
+/**
+ * @brief Concatenates an arbitrary number of TypeLists.
+ *
+ * @tparam Lists The TypeLists to concatenate.
+ */
+template<type_list_c... Lists>
+struct ConcatenateTypeLists;
+
+/**
+ * @brief Base case: single TypeList.
+ *
+ * @tparam Ts Types in the single TypeList.
+ */
+template<class... Ts>
+struct ConcatenateTypeLists<TypeList<Ts...>> {
+  using type = TypeList<Ts...>;
+};
+
+/**
+ * @brief Recursive case: two or more TypeLists.
+ *
+ * @tparam Ts Types in the first TypeList.
+ * @tparam Us Types in the second TypeList.
+ * @tparam Rest Remaining TypeLists.
+ */
+template<class... Ts, class... Us, type_list_c... Rest>
+struct ConcatenateTypeLists<TypeList<Ts...>, TypeList<Us...>, Rest...> {
+  using type = typename ConcatenateTypeLists<TypeList<Ts..., Us...>, Rest...>::type;
+};
+
+/**
+ * @brief Alias template for concatenating multiple TypeLists.
+ *
+ * @tparam Lists The TypeLists to concatenate.
+ */
+template<type_list_c... Lists>
+using concatenate_type_lists = typename ConcatenateTypeLists<Lists...>::type;
+
+/**
+ * @class TypeList
+ * @brief A list of types with various utility operations.
+ *
+ * @tparam Ts The types in the list.
+ */
+template<class First, class...Rest>
+struct TypeList<First,Rest...> {
+
+  /// Number of types in the list
+  static constexpr std::size_t size = 1 + sizeof...(Rest);
+
+  using first_type = First;
+
+  /**
+   * @brief Appends a type to the end of the list.
+   *
+   * @tparam T The type to append.
+   */
+  template<class T>
+  using append = TypeList<First,Rest...,T>;
+
+  /**
+   * @brief Retrieves the type at a specific index.
+   *
+   * @tparam I The index to retrieve.
+   */
+  template<std::size_t I>
+  using type = typename TypeListElement<I, TypeList<First,Rest...>>::type;
+
+  template<std::size_t I>
+  requires (I<size)
+  static auto get_type_index( size_constant<I> ) {
+    return std::type_index(typeid(type<I>));
+  }
+
+   /**
+   * @brief Removes the first type from the list.
+   */
+  using pop_front = TypeList<Rest...>;
+
+  /**
+   * @brief Adds a type to the front of the list.
+   *
+   * @tparam T The type to add.
+   */
+  template<class T>
+  using push_front = TypeList<T,First,Rest...>;
+
+  /**
+   * @brief Determines if the type T is in the TypeList
+   *
+   * @tparam T The type to search for.
+   *
+   * @return constexpr bool True if T is one of the types in the TypeList
+   */
+  template<class T>
+  static constexpr bool contains_type = std::disjunction_v<std::is_same<std::remove_cvref_t<T>,std::remove_cvref_t<First>>,std::is_same<std::remove_cvref_t<T>,std::remove_cvref_t<Rest>>...>;
+
+  /**
+   * @brief Finds the index of a type in the list if it exists
+   *
+   * @tparam T The type to search for.
+   */
+  template<class T>
+  requires contains_type<T>
+  static constexpr std::size_t index_of = IndexOf<T,First,Rest...>::value;
+
+  /**
+   * @brief Helper function to deduce if there are no repeated types.
+   */
+  template<std::size_t I = 0, std::size_t J = I + 1>
+  static constexpr bool is_unique_impl() {
+    if constexpr (I == size) {
+      return true;
+    } else if constexpr (J == size) {
+      return is_unique_impl<I + 1, I + 2>();
+    } else {
+      return !std::is_same_v<type<I>, type<J>> && is_unique_impl<I, J + 1>();
+    }
+  }
+
+  static constexpr bool is_unique = is_unique_impl();
+};
+
+template<>
+struct TypeList<> {
+  static constexpr std::size_t size = 0;
+
+  template<class T>
+  using append = TypeList<T>;
+
+  template<class T>
+  using push_front = TypeList<T>;
+
+  template<class>
+  static constexpr bool contains_type = false;
+
+  static constexpr bool is_unique = true;
+};
+
+/**
+ * @brief Specialization of Increment for TypeLists
+ * @tparam Ts The types in the TypeList
+ * @note Requires that Ts be incrementable
+ */
+template<class First, class...Rest>
+struct Increment<TypeList<First,Rest...>> {
+  using type = TypeList<increment_t<First>,increment_t<Rest>...>;
+};
+
+template<>
+struct Increment<TypeList<>> {};
+
+/**
+ * @class IndexedTypeList
+ * @brief A utility class for creating type lists indexed by compile-time values.
+ * @tparam T A template that takes a std::size_t parameter and produces a type.
+ * @details This class provides a way to create type lists where each element
+ * is generated by applying the template T to a sequence of indices.
+ */
+template<template<std::size_t> class T>
+struct IndexedTypeList {
+  /**
+   * @brief Helper function to create a TypeList from an index sequence.
+   * @tparam Is Parameter pack of indices.
+   * @return A TypeList containing T<Is>... types.
+   */
+  template<std::size_t...Is> 
+  static constexpr auto eval( std::index_sequence<Is...> ) -> TypeList<T<Is>...> {
+    return TypeList<T<Is>...>{};
+  }
+
+  /**
+   * @brief Creates a TypeList with N elements.
+   * @tparam N The number of elements in the resulting TypeList.
+   * @return A TypeList containing T<0>, T<1>, ..., T<N-1> types.
+   */
+  template<std::size_t N> 
+  static constexpr auto eval( size_constant<N> ) {
+    return eval( std::make_index_sequence<N>{} );
+  }
+
+  /**
+   * @typedef type
+   * @brief Alias for the resulting TypeList.
+   * @tparam N The number of elements in the TypeList.
+   */
+  template<std::size_t N>
+  using type = decltype( eval(size_constant<N>{}) );
+};
+
+/**
+ * @typedef indexed_type_list_t
+ * @brief Convenience alias for creating an indexed type list.
+ * @tparam T A template that takes a std::size_t parameter and produces a type.
+ * @tparam N The number of elements in the resulting TypeList.
+ * @details This alias provides a shorthand for creating a TypeList with N elements,
+ * where each element is generated by applying the template T to indices 0 to N-1.
+ */
+template<template<std::size_t> class T, std::size_t N>
+using indexed_type_list_t = typename IndexedTypeList<T>::template type<N>;
+
+} // namespace tincup
 
 namespace tincup {
 
@@ -682,18 +1061,19 @@ constexpr bool is_nothrow_invocable_v = detail::is_nothrow_invocable<Cp,Args...>
 
 namespace tincup {
 
-// Enhanced introspection helper for CPOs
-template<typename Cp, typename...Args>
-struct cpo_traits {
+// Prefer generator-provided metadata when available
+template<typename T, typename...As>
+concept has_generator_arg_traits_c = requires { typename T::template arg_traits<As...>; };
 
+// Enhanced introspection helper for CPOs
+template<cpo_c Cp, typename...Args>
+struct cpo_traits {
   static constexpr bool invocable = is_invocable_v<Cp,Args...>;
   static constexpr bool nothrow_invocable = is_nothrow_invocable_v<Cp,Args...>;
   static constexpr std::size_t arity = sizeof...(Args);
   using return_t = std::conditional_t<invocable, invocable_t<Cp,Args...>, void>;
 
-  // Enhanced introspection capabilities
   static constexpr bool is_void_returning = std::is_same_v<return_t, void>;
-  static constexpr bool is_const_invocable = invocable && std::is_const_v<Cp>;
 
   // Variadic parameter-pack metadata is not recoverable from instantiated Args...
   // Detect a CPO-provided flag (emitted by the generator) if available.
@@ -701,21 +1081,29 @@ struct cpo_traits {
   struct variadic_flag_is : std::false_type {};
   template<typename T>
   struct variadic_flag_is<T, std::void_t<decltype(T::is_variadic)>>
-      : std::bool_constant<static_cast<bool>(T::is_variadic)> {};
+    : std::bool_constant<static_cast<bool>(T::is_variadic)> {};
 
-  // Backward-compat: older generated CPOs might expose has_variadic_params
-  template<typename T, typename = void>
-  struct variadic_flag_has_params : std::false_type {};
-  template<typename T>
-  struct variadic_flag_has_params<T, std::void_t<decltype(T::has_variadic_params)>>
-      : std::bool_constant<static_cast<bool>(T::has_variadic_params)> {};
-
-  static constexpr bool is_variadic = variadic_flag_is<Cp>::value || 
-	                              variadic_flag_has_params<Cp>::value;
+  static constexpr bool is_variadic = variadic_flag_is<Cp>::value;
 
   // Type classification helpers
   template<std::size_t I>
   using arg_t = std::tuple_element_t<I, std::tuple<Args...>>;
+
+  using args_tuple = std::tuple<Args...>;
+  template<std::size_t I>
+  using decayed_arg_t = std::remove_cvref_t<arg_t<I>>;
+
+  // TypeList views of the argument types
+  using arg_types_list = TypeList<Args...>;
+  using decayed_arg_types_list = TypeList<std::remove_cvref_t<Args>...>;
+  
+  template<typename T>
+  struct remove_all_pointers { using type = T; };
+  template<typename T>
+  struct remove_all_pointers<T*> { using type = typename remove_all_pointers<T>::type; };
+  template<typename T>
+  using remove_all_pointers_t = typename remove_all_pointers<T>::type;
+  using raw_arg_types_list = TypeList<remove_all_pointers_t<std::remove_cvref_t<Args>>...>;
 
   // Check if all arguments are references
   static constexpr bool all_args_are_refs = (std::is_reference_v<Args> && ...);
@@ -730,6 +1118,167 @@ struct cpo_traits {
     else if constexpr (arity == 2) return "(T, U)";
     else return "(T, U, ...)";
   }
+  
+  // ==================================================
+  // Argument category flags and masks (per-index + bitmasks)
+  // ==================================================
+  enum : unsigned {
+    flag_value            = 1u << 0,
+    flag_pointer          = 1u << 1,
+    flag_lvalue_ref       = 1u << 2,
+    flag_rvalue_ref       = 1u << 3,
+    flag_const_qualified  = 1u << 4,
+    flag_forwarding_ref   = 1u << 5
+    // Note: Forwarding references cannot be reliably detected from Args alone.
+  };
+
+  // Fallback detection helpers
+  template<std::size_t I>
+  static constexpr bool det_is_pointer_v = std::is_pointer_v<std::remove_reference_t<arg_t<I>>>;
+  template<std::size_t I>
+  static constexpr bool det_is_lvalue_ref_v = std::is_lvalue_reference_v<arg_t<I>>;
+  template<std::size_t I>
+  static constexpr bool det_is_rvalue_ref_v = std::is_rvalue_reference_v<arg_t<I>>;
+  template<std::size_t I>
+  static constexpr bool det_is_value_v = (!std::is_reference_v<arg_t<I>> && !det_is_pointer_v<I>);
+  template<std::size_t I>
+  static constexpr bool det_is_const_qualified_v = []{
+    using A = std::remove_reference_t<arg_t<I>>;
+    if constexpr (std::is_pointer_v<A>) {
+      using P = std::remove_pointer_t<A>;
+      return std::is_const_v<std::remove_reference_t<P>>;
+    } else {
+      return std::is_const_v<A>;
+    }
+  }();
+
+  template<std::size_t I>
+  static constexpr std::uint64_t bit_if(bool v) { return v ? (std::uint64_t{1} << I) : 0ull; }
+
+  static constexpr std::uint64_t det_values_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_value_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_pointers_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_pointer_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_lvalue_refs_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_lvalue_ref_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_rvalue_refs_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_rvalue_ref_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_lvalue_const_refs_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_lvalue_ref_v<Is> && det_is_const_qualified_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_const_qualified_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_const_qualified_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_forwarding_refs_mask = 0ull; // not reliably detectable
+
+  // Public masks: prefer generator metadata when available
+  static constexpr std::uint64_t values_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::values_mask);
+    else return det_values_mask;
+  }();
+  static constexpr std::uint64_t pointers_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::pointers_mask);
+    else return det_pointers_mask;
+  }();
+  static constexpr std::uint64_t lvalue_refs_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_refs_mask);
+    else return det_lvalue_refs_mask;
+  }();
+  static constexpr std::uint64_t rvalue_refs_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::rvalue_refs_mask);
+    else return det_rvalue_refs_mask;
+  }();
+  static constexpr std::uint64_t lvalue_const_refs_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_const_refs_mask);
+    else return det_lvalue_const_refs_mask;
+  }();
+  static constexpr std::uint64_t forwarding_refs_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::forwarding_refs_mask);
+    else return det_forwarding_refs_mask;
+  }();
+  static constexpr std::uint64_t const_qualified_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::const_qualified_mask);
+    else return det_const_qualified_mask;
+  }();
+
+  // Convenience: flags as array (empty for arity==0)
+  static constexpr auto make_flags_array() {
+    if constexpr (arity == 0) {
+      return std::array<unsigned, 0>{};
+    } else {
+      return []<std::size_t...Is>(std::index_sequence<Is...>) {
+        return std::array<unsigned, sizeof...(Is)>{ ((
+            ((values_mask           >> Is) & 1ull ? flag_value          : 0u) |
+            ((pointers_mask         >> Is) & 1ull ? flag_pointer        : 0u) |
+            ((lvalue_refs_mask      >> Is) & 1ull ? flag_lvalue_ref     : 0u) |
+            ((rvalue_refs_mask      >> Is) & 1ull ? flag_rvalue_ref     : 0u) |
+            ((const_qualified_mask  >> Is) & 1ull ? flag_const_qualified: 0u) |
+            ((forwarding_refs_mask  >> Is) & 1ull ? flag_forwarding_ref : 0u)
+        ))... };
+      }(std::make_index_sequence<arity>{});
+    }
+  }
+  static constexpr auto arg_flags_array = make_flags_array();
+
+  // ==================================================
+  // Unique type counts
+  // ==================================================
+  template<std::size_t I>
+  using raw_arg_t = remove_all_pointers_t<decayed_arg_t<I>>;
+
+  template<std::size_t I, std::size_t... Prev>
+  static constexpr bool is_unique_decayed_index_impl(std::index_sequence<Prev...>) {
+    if constexpr (I == 0) return true;
+    else return (!(std::is_same_v<decayed_arg_t<I>, decayed_arg_t<Prev>> || ...));
+  }
+
+  template<std::size_t I, std::size_t... Prev>
+  static constexpr bool is_unique_raw_index_impl(std::index_sequence<Prev...>) {
+    if constexpr (I == 0) return true;
+    else return (!(std::is_same_v<raw_arg_t<I>, raw_arg_t<Prev>> || ...));
+  }
+
+  // Unique-type metrics using TypeList utilities
+  static constexpr std::size_t unique_decayed_types_count = []{
+    if constexpr (arity == 0) return std::size_t{0};
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      // Count indices that are the first occurrence of their type
+      return (std::size_t{0} + ... + (decayed_arg_types_list::template index_of<typename decayed_arg_types_list::template type<Is>> == Is ? std::size_t{1} : std::size_t{0}));
+    }(std::make_index_sequence<arity>{});
+  }();
+
+  static constexpr std::size_t unique_raw_types_count = []{
+    if constexpr (arity == 0) return std::size_t{0};
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      using list = raw_arg_types_list;
+      return (std::size_t{0} + ... + (list::template index_of<typename list::template type<Is>> == Is ? std::size_t{1} : std::size_t{0}));
+    }(std::make_index_sequence<arity>{});
+  }();
+
+  static constexpr bool args_unique_decayed = decayed_arg_types_list::is_unique;
+  static constexpr bool args_unique_raw = raw_arg_types_list::is_unique;
 }; // struct cpo_traits 
 
 } // namespace tincup

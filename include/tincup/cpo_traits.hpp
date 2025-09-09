@@ -10,22 +10,30 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 
 #pragma once
 
+#include <array>
+#include <cstdint>
+#include <tuple>
+#include "type_list.hpp"
+#include <type_traits>
+#include <string_view>
+
 #include "tag_invoke.hpp"
 
 namespace tincup {
 
-// Enhanced introspection helper for CPOs
-template<typename Cp, typename...Args>
-struct cpo_traits {
+// Prefer generator-provided metadata when available
+template<typename T, typename...As>
+concept has_generator_arg_traits_c = requires { typename T::template arg_traits<As...>; };
 
+// Enhanced introspection helper for CPOs
+template<cpo_c Cp, typename...Args>
+struct cpo_traits {
   static constexpr bool invocable = is_invocable_v<Cp,Args...>;
   static constexpr bool nothrow_invocable = is_nothrow_invocable_v<Cp,Args...>;
   static constexpr std::size_t arity = sizeof...(Args);
   using return_t = std::conditional_t<invocable, invocable_t<Cp,Args...>, void>;
 
-  // Enhanced introspection capabilities
   static constexpr bool is_void_returning = std::is_same_v<return_t, void>;
-  static constexpr bool is_const_invocable = invocable && std::is_const_v<Cp>;
 
   // Variadic parameter-pack metadata is not recoverable from instantiated Args...
   // Detect a CPO-provided flag (emitted by the generator) if available.
@@ -33,21 +41,29 @@ struct cpo_traits {
   struct variadic_flag_is : std::false_type {};
   template<typename T>
   struct variadic_flag_is<T, std::void_t<decltype(T::is_variadic)>>
-      : std::bool_constant<static_cast<bool>(T::is_variadic)> {};
+    : std::bool_constant<static_cast<bool>(T::is_variadic)> {};
 
-  // Backward-compat: older generated CPOs might expose has_variadic_params
-  template<typename T, typename = void>
-  struct variadic_flag_has_params : std::false_type {};
-  template<typename T>
-  struct variadic_flag_has_params<T, std::void_t<decltype(T::has_variadic_params)>>
-      : std::bool_constant<static_cast<bool>(T::has_variadic_params)> {};
-
-  static constexpr bool is_variadic = variadic_flag_is<Cp>::value || 
-	                              variadic_flag_has_params<Cp>::value;
+  static constexpr bool is_variadic = variadic_flag_is<Cp>::value;
 
   // Type classification helpers
   template<std::size_t I>
   using arg_t = std::tuple_element_t<I, std::tuple<Args...>>;
+
+  using args_tuple = std::tuple<Args...>;
+  template<std::size_t I>
+  using decayed_arg_t = std::remove_cvref_t<arg_t<I>>;
+
+  // TypeList views of the argument types
+  using arg_types_list = TypeList<Args...>;
+  using decayed_arg_types_list = TypeList<std::remove_cvref_t<Args>...>;
+  
+  template<typename T>
+  struct remove_all_pointers { using type = T; };
+  template<typename T>
+  struct remove_all_pointers<T*> { using type = typename remove_all_pointers<T>::type; };
+  template<typename T>
+  using remove_all_pointers_t = typename remove_all_pointers<T>::type;
+  using raw_arg_types_list = TypeList<remove_all_pointers_t<std::remove_cvref_t<Args>>...>;
 
   // Check if all arguments are references
   static constexpr bool all_args_are_refs = (std::is_reference_v<Args> && ...);
@@ -62,6 +78,167 @@ struct cpo_traits {
     else if constexpr (arity == 2) return "(T, U)";
     else return "(T, U, ...)";
   }
+  
+  // ==================================================
+  // Argument category flags and masks (per-index + bitmasks)
+  // ==================================================
+  enum : unsigned {
+    flag_value            = 1u << 0,
+    flag_pointer          = 1u << 1,
+    flag_lvalue_ref       = 1u << 2,
+    flag_rvalue_ref       = 1u << 3,
+    flag_const_qualified  = 1u << 4,
+    flag_forwarding_ref   = 1u << 5
+    // Note: Forwarding references cannot be reliably detected from Args alone.
+  };
+
+  // Fallback detection helpers
+  template<std::size_t I>
+  static constexpr bool det_is_pointer_v = std::is_pointer_v<std::remove_reference_t<arg_t<I>>>;
+  template<std::size_t I>
+  static constexpr bool det_is_lvalue_ref_v = std::is_lvalue_reference_v<arg_t<I>>;
+  template<std::size_t I>
+  static constexpr bool det_is_rvalue_ref_v = std::is_rvalue_reference_v<arg_t<I>>;
+  template<std::size_t I>
+  static constexpr bool det_is_value_v = (!std::is_reference_v<arg_t<I>> && !det_is_pointer_v<I>);
+  template<std::size_t I>
+  static constexpr bool det_is_const_qualified_v = []{
+    using A = std::remove_reference_t<arg_t<I>>;
+    if constexpr (std::is_pointer_v<A>) {
+      using P = std::remove_pointer_t<A>;
+      return std::is_const_v<std::remove_reference_t<P>>;
+    } else {
+      return std::is_const_v<A>;
+    }
+  }();
+
+  template<std::size_t I>
+  static constexpr std::uint64_t bit_if(bool v) { return v ? (std::uint64_t{1} << I) : 0ull; }
+
+  static constexpr std::uint64_t det_values_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_value_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_pointers_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_pointer_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_lvalue_refs_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_lvalue_ref_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_rvalue_refs_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_rvalue_ref_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_lvalue_const_refs_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_lvalue_ref_v<Is> && det_is_const_qualified_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_const_qualified_mask = []{
+    if constexpr (arity == 0) return 0ull;
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      return (0ull | ... | bit_if<Is>(det_is_const_qualified_v<Is>));
+    }(std::make_index_sequence<arity>{});
+  }();
+  static constexpr std::uint64_t det_forwarding_refs_mask = 0ull; // not reliably detectable
+
+  // Public masks: prefer generator metadata when available
+  static constexpr std::uint64_t values_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::values_mask);
+    else return det_values_mask;
+  }();
+  static constexpr std::uint64_t pointers_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::pointers_mask);
+    else return det_pointers_mask;
+  }();
+  static constexpr std::uint64_t lvalue_refs_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_refs_mask);
+    else return det_lvalue_refs_mask;
+  }();
+  static constexpr std::uint64_t rvalue_refs_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::rvalue_refs_mask);
+    else return det_rvalue_refs_mask;
+  }();
+  static constexpr std::uint64_t lvalue_const_refs_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_const_refs_mask);
+    else return det_lvalue_const_refs_mask;
+  }();
+  static constexpr std::uint64_t forwarding_refs_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::forwarding_refs_mask);
+    else return det_forwarding_refs_mask;
+  }();
+  static constexpr std::uint64_t const_qualified_mask = []{
+    if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::const_qualified_mask);
+    else return det_const_qualified_mask;
+  }();
+
+  // Convenience: flags as array (empty for arity==0)
+  static constexpr auto make_flags_array() {
+    if constexpr (arity == 0) {
+      return std::array<unsigned, 0>{};
+    } else {
+      return []<std::size_t...Is>(std::index_sequence<Is...>) {
+        return std::array<unsigned, sizeof...(Is)>{ ((
+            ((values_mask           >> Is) & 1ull ? flag_value          : 0u) |
+            ((pointers_mask         >> Is) & 1ull ? flag_pointer        : 0u) |
+            ((lvalue_refs_mask      >> Is) & 1ull ? flag_lvalue_ref     : 0u) |
+            ((rvalue_refs_mask      >> Is) & 1ull ? flag_rvalue_ref     : 0u) |
+            ((const_qualified_mask  >> Is) & 1ull ? flag_const_qualified: 0u) |
+            ((forwarding_refs_mask  >> Is) & 1ull ? flag_forwarding_ref : 0u)
+        ))... };
+      }(std::make_index_sequence<arity>{});
+    }
+  }
+  static constexpr auto arg_flags_array = make_flags_array();
+
+  // ==================================================
+  // Unique type counts
+  // ==================================================
+  template<std::size_t I>
+  using raw_arg_t = remove_all_pointers_t<decayed_arg_t<I>>;
+
+  template<std::size_t I, std::size_t... Prev>
+  static constexpr bool is_unique_decayed_index_impl(std::index_sequence<Prev...>) {
+    if constexpr (I == 0) return true;
+    else return (!(std::is_same_v<decayed_arg_t<I>, decayed_arg_t<Prev>> || ...));
+  }
+
+  template<std::size_t I, std::size_t... Prev>
+  static constexpr bool is_unique_raw_index_impl(std::index_sequence<Prev...>) {
+    if constexpr (I == 0) return true;
+    else return (!(std::is_same_v<raw_arg_t<I>, raw_arg_t<Prev>> || ...));
+  }
+
+  // Unique-type metrics using TypeList utilities
+  static constexpr std::size_t unique_decayed_types_count = []{
+    if constexpr (arity == 0) return std::size_t{0};
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      // Count indices that are the first occurrence of their type
+      return (std::size_t{0} + ... + (decayed_arg_types_list::template index_of<typename decayed_arg_types_list::template type<Is>> == Is ? std::size_t{1} : std::size_t{0}));
+    }(std::make_index_sequence<arity>{});
+  }();
+
+  static constexpr std::size_t unique_raw_types_count = []{
+    if constexpr (arity == 0) return std::size_t{0};
+    else return []<std::size_t...Is>(std::index_sequence<Is...>) {
+      using list = raw_arg_types_list;
+      return (std::size_t{0} + ... + (list::template index_of<typename list::template type<Is>> == Is ? std::size_t{1} : std::size_t{0}));
+    }(std::make_index_sequence<arity>{});
+  }();
+
+  static constexpr bool args_unique_decayed = decayed_arg_types_list::is_unique;
+  static constexpr bool args_unique_raw = raw_arg_types_list::is_unique;
 }; // struct cpo_traits 
 
 } // namespace tincup
