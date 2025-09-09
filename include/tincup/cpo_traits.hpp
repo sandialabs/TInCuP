@@ -21,6 +21,22 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 
 namespace tincup {
 
+// Configure maximum supported CPO arity and derive a compact mask type
+#ifndef TINCUP_MAX_CPO_ARITY
+#  define TINCUP_MAX_CPO_ARITY 16
+#endif
+static_assert(TINCUP_MAX_CPO_ARITY > 0 && TINCUP_MAX_CPO_ARITY <= 64, "TINCUP_MAX_CPO_ARITY must be in (0, 64]");
+
+using arity_type = std::conditional_t<
+    (TINCUP_MAX_CPO_ARITY <= 8),  std::uint8_t,
+    std::conditional_t<
+      (TINCUP_MAX_CPO_ARITY <= 16), std::uint16_t,
+      std::conditional_t<
+        (TINCUP_MAX_CPO_ARITY <= 32), std::uint32_t,
+        std::uint64_t
+      >>
+  >;
+
 // External extension point for generator-provided argument metadata
 // Default: not available. Generators can specialize this for a given CPO.
 template<typename Cp, typename...Args>
@@ -38,6 +54,7 @@ struct cpo_traits {
   static constexpr bool invocable = is_invocable_v<Cp,Args...>;
   static constexpr bool nothrow_invocable = is_nothrow_invocable_v<Cp,Args...>;
   static constexpr std::size_t arity = sizeof...(Args);
+  static_assert(arity <= TINCUP_MAX_CPO_ARITY, "CPO arity exceeds TINCUP_MAX_CPO_ARITY");
   using return_t = std::conditional_t<invocable, invocable_t<Cp,Args...>, void>;
 
   static constexpr bool is_void_returning = std::is_same_v<return_t, void>;
@@ -120,80 +137,80 @@ struct cpo_traits {
   }();
 
   template<std::size_t I>
-  static constexpr std::uint64_t bit_if(bool v) { return v ? (std::uint64_t{1} << I) : 0ull; }
+  static constexpr arity_type bit_if(bool v) { return v ? (arity_type{1} << I) : arity_type{0}; }
 
-  static constexpr std::uint64_t det_values_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_values_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_value_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_value_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_pointers_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_pointers_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_pointer_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_pointer_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_lvalue_refs_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_lvalue_refs_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_lvalue_ref_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_lvalue_ref_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_rvalue_refs_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_rvalue_refs_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_rvalue_ref_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_rvalue_ref_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_lvalue_const_refs_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_lvalue_const_refs_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_lvalue_ref_v<Is> && det_is_const_qualified_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_lvalue_ref_v<Is> && det_is_const_qualified_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_const_qualified_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_const_qualified_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_const_qualified_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_const_qualified_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_forwarding_refs_mask = 0ull; // not reliably detectable
+  static constexpr arity_type det_forwarding_refs_mask = arity_type{0}; // not reliably detectable
 
   // Public masks: prefer generator metadata when available
-  static constexpr std::uint64_t values_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::values_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::values_mask);
+  static constexpr arity_type values_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::values_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::values_mask);
     else return det_values_mask;
   }();
-  static constexpr std::uint64_t pointers_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::pointers_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::pointers_mask);
+  static constexpr arity_type pointers_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::pointers_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::pointers_mask);
     else return det_pointers_mask;
   }();
-  static constexpr std::uint64_t lvalue_refs_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::lvalue_refs_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_refs_mask);
+  static constexpr arity_type lvalue_refs_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::lvalue_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::lvalue_refs_mask);
     else return det_lvalue_refs_mask;
   }();
-  static constexpr std::uint64_t rvalue_refs_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::rvalue_refs_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::rvalue_refs_mask);
+  static constexpr arity_type rvalue_refs_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::rvalue_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::rvalue_refs_mask);
     else return det_rvalue_refs_mask;
   }();
-  static constexpr std::uint64_t lvalue_const_refs_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::lvalue_const_refs_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_const_refs_mask);
+  static constexpr arity_type lvalue_const_refs_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::lvalue_const_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::lvalue_const_refs_mask);
     else return det_lvalue_const_refs_mask;
   }();
-  static constexpr std::uint64_t forwarding_refs_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::forwarding_refs_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::forwarding_refs_mask);
+  static constexpr arity_type forwarding_refs_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::forwarding_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::forwarding_refs_mask);
     else return det_forwarding_refs_mask;
   }();
-  static constexpr std::uint64_t const_qualified_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::const_qualified_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::const_qualified_mask);
+  static constexpr arity_type const_qualified_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::const_qualified_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::const_qualified_mask);
     else return det_const_qualified_mask;
   }();
 

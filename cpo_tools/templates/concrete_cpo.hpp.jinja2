@@ -30,57 +30,57 @@ namespace tincup {
   > {
     static constexpr bool available = true;
     static constexpr std::size_t fixed_arity = {{ args | length }};
-    static constexpr unsigned long long values_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type values_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
         {% set full = a.full %}
         {% set has_ref = '&' in full %}
         {% set has_ptr = '*' in full %}
         {% if (not has_ref) and (not has_ptr) %}
-        m |= (1ull << {{ loop.index0 }});
+        m |= (tincup::arity_type{1} << {{ loop.index0 }});
         {% endif %}
       {% endfor %}
       return m;
     }();
-    static constexpr unsigned long long pointers_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type pointers_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
-        {% if '*' in a.full %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% if '*' in a.full %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
       {% endfor %}
       return m;
     }();
-    static constexpr unsigned long long lvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
-        {% if ('&' in a.full) and ('&&' not in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% if ('&' in a.full) and ('&&' not in a.full) %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
       {% endfor %}
       return m;
     }();
-    static constexpr unsigned long long rvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type rvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
-        {% if ('&&' in a.full) and (not a.is_forwarding) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% if ('&&' in a.full) and (not a.is_forwarding) %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
       {% endfor %}
       return m;
     }();
-    static constexpr unsigned long long forwarding_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type forwarding_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
-        {% if ('&&' in a.full) and a.is_forwarding %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% if ('&&' in a.full) and a.is_forwarding %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
       {% endfor %}
       return m;
     }();
-    static constexpr unsigned long long lvalue_const_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
-        {% if ('&' in a.full) and ('&&' not in a.full) and ('const' in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% if ('&' in a.full) and ('&&' not in a.full) and ('const' in a.full) %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
       {% endfor %}
       return m;
     }();
-    static constexpr unsigned long long const_qualified_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type const_qualified_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
-        {% if 'const' in a.full %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+        {% if 'const' in a.full %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
       {% endfor %}
       return m;
     }();

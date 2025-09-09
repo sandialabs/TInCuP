@@ -647,23 +647,23 @@ struct size_constant {
 };
 
 /**
- * @class Increment
+ * @class increment
  * @brief A template class for incrementing compile-time values.
  * @tparam T The type to be incremented.
  * @details This class template provides a mechanism to increment compile-time
  * values, particularly useful for template metaprogramming.
  */
-template<class> struct Increment;
+template<class> struct increment;
 
 /**
- * @class Increment<T<I>>
- * @brief Specialization of Increment for template types with a size_t parameter.
+ * @class increment<T<I>>
+ * @brief Specialization of increment for template types with a size_t parameter.
  * @tparam T The template class to be incremented.
  * @tparam I The current value to be incremented.
  * @details This specialization increments the value I by 1 in the resulting type.
  */
 template<template<std::size_t> class T, std::size_t I> 
-struct Increment<T<I>> {
+struct increment<T<I>> {
   using type = T<I+1>;
 };
 
@@ -672,10 +672,10 @@ struct Increment<T<I>> {
  * @brief Convenience alias for accessing the incremented type.
  * @tparam T The type to be incremented.
  * @details This alias template provides a shorthand for accessing the
- * incremented type defined by the Increment class template.
+ * incremented type defined by the increment class template.
  */
 template<class T>
-using increment_t = typename Increment<T>::type;
+using increment_t = typename increment<T>::type;
 
 } // namespace tincup
 
@@ -685,32 +685,32 @@ namespace tincup {
  * @brief A helper type trait for finding the index of a given type in variadic parameter pack
  */
 template<class, class...>
-struct IndexOf;
+struct index_of;
 
 template<class First, class Second, class... Rest>
-struct IndexOf<First, Second, Rest...> : std::conditional_t<std::is_same_v<std::remove_cvref_t<First>, std::remove_cvref_t<Second>>,
+struct index_of<First, Second, Rest...> : std::conditional_t<std::is_same_v<std::remove_cvref_t<First>, std::remove_cvref_t<Second>>,
                                                             size_constant<0>,
-                                                            size_constant<1 + IndexOf<First, Rest...>::value>> {};
+                                                            size_constant<1 + index_of<First, Rest...>::value>> {};
 
 template<class T>
-struct IndexOf<T> : size_constant<0> {};
+struct index_of<T> : size_constant<0> {};
 
-template<class...> struct TypeList;
+template<class...> struct type_list;
 
 namespace detail {
 template<class> 
-struct IsTypeList : std::false_type {};
+struct Istype_list : std::false_type {};
 
 template<class...Ts>
-struct IsTypeList<TypeList<Ts...>> : std::true_type {};
+struct Istype_list<type_list<Ts...>> : std::true_type {};
 };
 
 /**
  * @concept type_list_c
- * @brief Concept for types that satisfy the TypeList interface.
+ * @brief Concept for types that satisfy the type_list interface.
  */
 template<class TL>
-concept type_list_c = detail::IsTypeList<TL>::value;
+concept type_list_c = detail::Istype_list<TL>::value;
 
 template<class TL>
 concept unique_type_list_c = type_list_c<TL> && TL::is_unique;
@@ -720,30 +720,30 @@ concept nonempty_type_list_c = type_list_c<TL> && (TL::size > 0);
                              
 
 /**
- * @class TypeListElement
- * @brief Retrieves the type at a specific index in a TypeList.
+ * @class type_list_element
+ * @brief Retrieves the type at a specific index in a type_list.
  *
  * @tparam I The index to retrieve.
- * @tparam TL The TypeList to retrieve from.
+ * @tparam TL The type_list to retrieve from.
  */
 template<std::size_t, type_list_c>
-struct TypeListElement;
+struct type_list_element;
 
 /**
- * @class TypeListElement<0u,TypeList<First,Rest...>> 
- * @brief Specialization for retrieving the first element of a TypeList.
+ * @class type_list_element<0u,type_list<First,Rest...>> 
+ * @brief Specialization for retrieving the first element of a type_list.
  *
  * @tparam First The first type in the list.
  * @tparam Rest The remaining types in the list.
  */
 template<class First, class...Rest>
-struct TypeListElement<0u,TypeList<First,Rest...>> {
+struct type_list_element<0u,type_list<First,Rest...>> {
   using type = First;
 };
 
 /**
- * @class TypeListElement<I,TypeList<First,Rest...>> 
- * @brief Specialization for retrieving a non-first element of a TypeList.
+ * @class type_list_element<I,type_list<First,Rest...>> 
+ * @brief Specialization for retrieving a non-first element of a type_list.
  *
  * @tparam I The index to retrieve.
  * @tparam First The first type in the list.
@@ -751,12 +751,12 @@ struct TypeListElement<0u,TypeList<First,Rest...>> {
  */
 template<std::size_t I, class First, class...Rest>
 requires (I > 0 && I <= sizeof...(Rest))
-struct TypeListElement<I,TypeList<First,Rest...>> {
-  using type = typename TypeListElement<I-1u,TypeList<Rest...>>::type;
+struct type_list_element<I,type_list<First,Rest...>> {
+  using type = typename type_list_element<I-1u,type_list<Rest...>>::type;
 };
 
 /**
- * @class TypeListElement<I,TypeList<Ts...>> 
+ * @class type_list_element<I,type_list<Ts...>> 
  * @brief Specialization for handling out-of-bounds indices.
  *
  * @tparam I The index to retrieve.
@@ -764,58 +764,58 @@ struct TypeListElement<I,TypeList<First,Rest...>> {
  */
 template<std::size_t I, class...Ts>
 requires (I > sizeof...(Ts))
-struct TypeListElement<I,TypeList<Ts...>> {
+struct type_list_element<I,type_list<Ts...>> {
   // This will cause a compile-time error when accessed
-  static_assert(I <= sizeof...(Ts), "Index out of bounds in TypeList");
+  static_assert(I <= sizeof...(Ts), "Index out of bounds in type_list");
 };
-// Note: pop_front is available as a member alias on TypeList
+// Note: pop_front is available as a member alias on type_list
 
 /**
- * @brief Concatenates an arbitrary number of TypeLists.
+ * @brief Concatenates an arbitrary number of type_lists.
  *
- * @tparam Lists The TypeLists to concatenate.
+ * @tparam Lists The type_lists to concatenate.
  */
 template<type_list_c... Lists>
-struct ConcatenateTypeLists;
+struct concatenate_type_lists;
 
 /**
- * @brief Base case: single TypeList.
+ * @brief Base case: single type_list.
  *
- * @tparam Ts Types in the single TypeList.
+ * @tparam Ts Types in the single type_list.
  */
 template<class... Ts>
-struct ConcatenateTypeLists<TypeList<Ts...>> {
-  using type = TypeList<Ts...>;
+struct concatenate_type_lists<type_list<Ts...>> {
+  using type = type_list<Ts...>;
 };
 
 /**
- * @brief Recursive case: two or more TypeLists.
+ * @brief Recursive case: two or more type_lists.
  *
- * @tparam Ts Types in the first TypeList.
- * @tparam Us Types in the second TypeList.
- * @tparam Rest Remaining TypeLists.
+ * @tparam Ts Types in the first type_list.
+ * @tparam Us Types in the second type_list.
+ * @tparam Rest Remaining type_lists.
  */
 template<class... Ts, class... Us, type_list_c... Rest>
-struct ConcatenateTypeLists<TypeList<Ts...>, TypeList<Us...>, Rest...> {
-  using type = typename ConcatenateTypeLists<TypeList<Ts..., Us...>, Rest...>::type;
+struct concatenate_type_lists<type_list<Ts...>, type_list<Us...>, Rest...> {
+  using type = typename concatenate_type_lists<type_list<Ts..., Us...>, Rest...>::type;
 };
 
 /**
- * @brief Alias template for concatenating multiple TypeLists.
+ * @brief Alias template for concatenating multiple type_lists.
  *
- * @tparam Lists The TypeLists to concatenate.
+ * @tparam Lists The type_lists to concatenate.
  */
 template<type_list_c... Lists>
-using concatenate_type_lists = typename ConcatenateTypeLists<Lists...>::type;
+using concatenate_type_lists = typename concatenate_type_lists<Lists...>::type;
 
 /**
- * @class TypeList
+ * @class type_list
  * @brief A list of types with various utility operations.
  *
  * @tparam Ts The types in the list.
  */
 template<class First, class...Rest>
-struct TypeList<First,Rest...> {
+struct type_list<First,Rest...> {
 
   /// Number of types in the list
   static constexpr std::size_t size = 1 + sizeof...(Rest);
@@ -828,7 +828,7 @@ struct TypeList<First,Rest...> {
    * @tparam T The type to append.
    */
   template<class T>
-  using append = TypeList<First,Rest...,T>;
+  using append = type_list<First,Rest...,T>;
 
   /**
    * @brief Retrieves the type at a specific index.
@@ -836,7 +836,7 @@ struct TypeList<First,Rest...> {
    * @tparam I The index to retrieve.
    */
   template<std::size_t I>
-  using type = typename TypeListElement<I, TypeList<First,Rest...>>::type;
+  using type = typename type_list_element<I, type_list<First,Rest...>>::type;
 
   template<std::size_t I>
   requires (I<size)
@@ -847,7 +847,7 @@ struct TypeList<First,Rest...> {
    /**
    * @brief Removes the first type from the list.
    */
-  using pop_front = TypeList<Rest...>;
+  using pop_front = type_list<Rest...>;
 
   /**
    * @brief Adds a type to the front of the list.
@@ -855,14 +855,14 @@ struct TypeList<First,Rest...> {
    * @tparam T The type to add.
    */
   template<class T>
-  using push_front = TypeList<T,First,Rest...>;
+  using push_front = type_list<T,First,Rest...>;
 
   /**
-   * @brief Determines if the type T is in the TypeList
+   * @brief Determines if the type T is in the type_list
    *
    * @tparam T The type to search for.
    *
-   * @return constexpr bool True if T is one of the types in the TypeList
+   * @return constexpr bool True if T is one of the types in the type_list
    */
   template<class T>
   static constexpr bool contains_type = std::disjunction_v<std::is_same<std::remove_cvref_t<T>,std::remove_cvref_t<First>>,std::is_same<std::remove_cvref_t<T>,std::remove_cvref_t<Rest>>...>;
@@ -874,7 +874,7 @@ struct TypeList<First,Rest...> {
    */
   template<class T>
   requires contains_type<T>
-  static constexpr std::size_t index_of = IndexOf<T,First,Rest...>::value;
+  static constexpr std::size_t index_of = index_of<T,First,Rest...>::value;
 
   /**
    * @brief Helper function to deduce if there are no repeated types.
@@ -894,14 +894,14 @@ struct TypeList<First,Rest...> {
 };
 
 template<>
-struct TypeList<> {
+struct type_list<> {
   static constexpr std::size_t size = 0;
 
   template<class T>
-  using append = TypeList<T>;
+  using append = type_list<T>;
 
   template<class T>
-  using push_front = TypeList<T>;
+  using push_front = type_list<T>;
 
   template<class>
   static constexpr bool contains_type = false;
@@ -910,41 +910,41 @@ struct TypeList<> {
 };
 
 /**
- * @brief Specialization of Increment for TypeLists
- * @tparam Ts The types in the TypeList
+ * @brief Specialization of increment for type_lists
+ * @tparam Ts The types in the type_list
  * @note Requires that Ts be incrementable
  */
 template<class First, class...Rest>
-struct Increment<TypeList<First,Rest...>> {
-  using type = TypeList<increment_t<First>,increment_t<Rest>...>;
+struct increment<type_list<First,Rest...>> {
+  using type = type_list<increment_t<First>,increment_t<Rest>...>;
 };
 
 template<>
-struct Increment<TypeList<>> {};
+struct increment<type_list<>> {};
 
 /**
- * @class IndexedTypeList
+ * @class indexed_type_list
  * @brief A utility class for creating type lists indexed by compile-time values.
  * @tparam T A template that takes a std::size_t parameter and produces a type.
  * @details This class provides a way to create type lists where each element
  * is generated by applying the template T to a sequence of indices.
  */
 template<template<std::size_t> class T>
-struct IndexedTypeList {
+struct indexed_type_list {
   /**
-   * @brief Helper function to create a TypeList from an index sequence.
+   * @brief Helper function to create a type_list from an index sequence.
    * @tparam Is Parameter pack of indices.
-   * @return A TypeList containing T<Is>... types.
+   * @return A type_list containing T<Is>... types.
    */
   template<std::size_t...Is> 
-  static constexpr auto eval( std::index_sequence<Is...> ) -> TypeList<T<Is>...> {
-    return TypeList<T<Is>...>{};
+  static constexpr auto eval( std::index_sequence<Is...> ) -> type_list<T<Is>...> {
+    return type_list<T<Is>...>{};
   }
 
   /**
-   * @brief Creates a TypeList with N elements.
-   * @tparam N The number of elements in the resulting TypeList.
-   * @return A TypeList containing T<0>, T<1>, ..., T<N-1> types.
+   * @brief Creates a type_list with N elements.
+   * @tparam N The number of elements in the resulting type_list.
+   * @return A type_list containing T<0>, T<1>, ..., T<N-1> types.
    */
   template<std::size_t N> 
   static constexpr auto eval( size_constant<N> ) {
@@ -953,8 +953,8 @@ struct IndexedTypeList {
 
   /**
    * @typedef type
-   * @brief Alias for the resulting TypeList.
-   * @tparam N The number of elements in the TypeList.
+   * @brief Alias for the resulting type_list.
+   * @tparam N The number of elements in the type_list.
    */
   template<std::size_t N>
   using type = decltype( eval(size_constant<N>{}) );
@@ -964,12 +964,12 @@ struct IndexedTypeList {
  * @typedef indexed_type_list_t
  * @brief Convenience alias for creating an indexed type list.
  * @tparam T A template that takes a std::size_t parameter and produces a type.
- * @tparam N The number of elements in the resulting TypeList.
- * @details This alias provides a shorthand for creating a TypeList with N elements,
+ * @tparam N The number of elements in the resulting type_list.
+ * @details This alias provides a shorthand for creating a type_list with N elements,
  * where each element is generated by applying the template T to indices 0 to N-1.
  */
 template<template<std::size_t> class T, std::size_t N>
-using indexed_type_list_t = typename IndexedTypeList<T>::template type<N>;
+using indexed_type_list_t = typename indexed_type_list<T>::template type<N>;
 
 } // namespace tincup
 
@@ -1061,6 +1061,22 @@ constexpr bool is_nothrow_invocable_v = detail::is_nothrow_invocable<Cp,Args...>
 
 namespace tincup {
 
+// Configure maximum supported CPO arity and derive a compact mask type
+#ifndef TINCUP_MAX_CPO_ARITY
+#  define TINCUP_MAX_CPO_ARITY 16
+#endif
+static_assert(TINCUP_MAX_CPO_ARITY > 0 && TINCUP_MAX_CPO_ARITY <= 64, "TINCUP_MAX_CPO_ARITY must be in (0, 64]");
+
+using arity_type = std::conditional_t<
+    (TINCUP_MAX_CPO_ARITY <= 8),  std::uint8_t,
+    std::conditional_t<
+      (TINCUP_MAX_CPO_ARITY <= 16), std::uint16_t,
+      std::conditional_t<
+        (TINCUP_MAX_CPO_ARITY <= 32), std::uint32_t,
+        std::uint64_t
+      >>
+  >;
+
 // External extension point for generator-provided argument metadata
 // Default: not available. Generators can specialize this for a given CPO.
 template<typename Cp, typename...Args>
@@ -1078,6 +1094,7 @@ struct cpo_traits {
   static constexpr bool invocable = is_invocable_v<Cp,Args...>;
   static constexpr bool nothrow_invocable = is_nothrow_invocable_v<Cp,Args...>;
   static constexpr std::size_t arity = sizeof...(Args);
+  static_assert(arity <= TINCUP_MAX_CPO_ARITY, "CPO arity exceeds TINCUP_MAX_CPO_ARITY");
   using return_t = std::conditional_t<invocable, invocable_t<Cp,Args...>, void>;
 
   static constexpr bool is_void_returning = std::is_same_v<return_t, void>;
@@ -1160,80 +1177,80 @@ struct cpo_traits {
   }();
 
   template<std::size_t I>
-  static constexpr std::uint64_t bit_if(bool v) { return v ? (std::uint64_t{1} << I) : 0ull; }
+  static constexpr arity_type bit_if(bool v) { return v ? (arity_type{1} << I) : arity_type{0}; }
 
-  static constexpr std::uint64_t det_values_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_values_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_value_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_value_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_pointers_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_pointers_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_pointer_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_pointer_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_lvalue_refs_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_lvalue_refs_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_lvalue_ref_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_lvalue_ref_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_rvalue_refs_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_rvalue_refs_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_rvalue_ref_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_rvalue_ref_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_lvalue_const_refs_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_lvalue_const_refs_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_lvalue_ref_v<Is> && det_is_const_qualified_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_lvalue_ref_v<Is> && det_is_const_qualified_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_const_qualified_mask = []{
-    if constexpr (arity == 0) return 0ull;
+  static constexpr arity_type det_const_qualified_mask = []{
+    if constexpr (arity == 0) return arity_type{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
-      return (0ull | ... | bit_if<Is>(det_is_const_qualified_v<Is>));
+      return (arity_type{0} | ... | bit_if<Is>(det_is_const_qualified_v<Is>));
     }(std::make_index_sequence<arity>{});
   }();
-  static constexpr std::uint64_t det_forwarding_refs_mask = 0ull; // not reliably detectable
+  static constexpr arity_type det_forwarding_refs_mask = arity_type{0}; // not reliably detectable
 
   // Public masks: prefer generator metadata when available
-  static constexpr std::uint64_t values_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::values_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::values_mask);
+  static constexpr arity_type values_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::values_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::values_mask);
     else return det_values_mask;
   }();
-  static constexpr std::uint64_t pointers_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::pointers_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::pointers_mask);
+  static constexpr arity_type pointers_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::pointers_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::pointers_mask);
     else return det_pointers_mask;
   }();
-  static constexpr std::uint64_t lvalue_refs_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::lvalue_refs_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_refs_mask);
+  static constexpr arity_type lvalue_refs_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::lvalue_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::lvalue_refs_mask);
     else return det_lvalue_refs_mask;
   }();
-  static constexpr std::uint64_t rvalue_refs_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::rvalue_refs_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::rvalue_refs_mask);
+  static constexpr arity_type rvalue_refs_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::rvalue_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::rvalue_refs_mask);
     else return det_rvalue_refs_mask;
   }();
-  static constexpr std::uint64_t lvalue_const_refs_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::lvalue_const_refs_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::lvalue_const_refs_mask);
+  static constexpr arity_type lvalue_const_refs_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::lvalue_const_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::lvalue_const_refs_mask);
     else return det_lvalue_const_refs_mask;
   }();
-  static constexpr std::uint64_t forwarding_refs_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::forwarding_refs_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::forwarding_refs_mask);
+  static constexpr arity_type forwarding_refs_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::forwarding_refs_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::forwarding_refs_mask);
     else return det_forwarding_refs_mask;
   }();
-  static constexpr std::uint64_t const_qualified_mask = []{
-    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<std::uint64_t>(cpo_arg_traits<Cp, Args...>::const_qualified_mask);
-    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<std::uint64_t>(Cp::template arg_traits<Args...>::const_qualified_mask);
+  static constexpr arity_type const_qualified_mask = []{
+    if constexpr (cpo_arg_traits<Cp, Args...>::available) return static_cast<arity_type>(cpo_arg_traits<Cp, Args...>::const_qualified_mask);
+    else if constexpr (has_generator_arg_traits_c<Cp, Args...>) return static_cast<arity_type>(Cp::template arg_traits<Args...>::const_qualified_mask);
     else return det_const_qualified_mask;
   }();
 

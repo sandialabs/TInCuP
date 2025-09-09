@@ -36,15 +36,15 @@ namespace tincup {
     static constexpr std::size_t fixed_arity = {{ args | selectattr('is_variadic', 'equalto', False) | list | length }};
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
-      unsigned long long m = 0ull;
-      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      tincup::arity_type m = tincup::arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr unsigned long long values_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type values_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       // Fixed positions
       {% for a in args %}
         {% if not a.is_variadic %}
@@ -52,7 +52,7 @@ namespace tincup {
           {% set has_ref = '&' in full %}
           {% set has_ptr = '*' in full %}
           {% if (not has_ref) and (not has_ptr) %}
-          m |= (1ull << {{ loop.index0 }});
+          m |= (tincup::arity_type{1} << {{ loop.index0 }});
           {% endif %}
         {% endif %}
       {% endfor %}
@@ -72,11 +72,11 @@ namespace tincup {
     }();
 
     // Pointers mask
-    static constexpr unsigned long long pointers_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type pointers_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
         {% if not a.is_variadic %}
-          {% if '*' in a.full %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+          {% if '*' in a.full %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
         {% endif %}
       {% endfor %}
       {% if has_variadic and pack and ('*' in pack.full) %}
@@ -86,11 +86,11 @@ namespace tincup {
     }();
 
     // Lvalue refs mask
-    static constexpr unsigned long long lvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
         {% if not a.is_variadic %}
-          {% if ('&' in a.full) and ('&&' not in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+          {% if ('&' in a.full) and ('&&' not in a.full) %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
         {% endif %}
       {% endfor %}
       {% if has_variadic and pack and (('&' in pack.full) and ('&&' not in pack.full)) %}
@@ -100,11 +100,11 @@ namespace tincup {
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr unsigned long long rvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type rvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
         {% if not a.is_variadic %}
-          {% if ('&&' in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+          {% if ('&&' in a.full) %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
         {% endif %}
       {% endfor %}
       {% if has_variadic and pack and ('&&' in pack.full) and (not pack.is_forwarding) %}
@@ -114,11 +114,11 @@ namespace tincup {
     }();
 
     // Forwarding refs mask
-    static constexpr unsigned long long forwarding_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type forwarding_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
         {% if not a.is_variadic %}
-          {% if ('&&' in a.full) and a.is_forwarding %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+          {% if ('&&' in a.full) and a.is_forwarding %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
         {% endif %}
       {% endfor %}
       {% if has_variadic and pack and ('&&' in pack.full) and pack.is_forwarding %}
@@ -128,11 +128,11 @@ namespace tincup {
     }();
 
     // Lvalue const refs mask
-    static constexpr unsigned long long lvalue_const_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
         {% if not a.is_variadic %}
-          {% if ('&' in a.full) and ('&&' not in a.full) and ('const' in a.full) %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+          {% if ('&' in a.full) and ('&&' not in a.full) and ('const' in a.full) %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
         {% endif %}
       {% endfor %}
       {% if has_variadic and pack and (('&' in pack.full) and ('&&' not in pack.full) and ('const' in pack.full)) %}
@@ -142,11 +142,11 @@ namespace tincup {
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr unsigned long long const_qualified_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type const_qualified_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       {% for a in args %}
         {% if not a.is_variadic %}
-          {% if 'const' in a.full %} m |= (1ull << {{ loop.index0 }}); {% endif %}
+          {% if 'const' in a.full %} m |= (tincup::arity_type{1} << {{ loop.index0 }}); {% endif %}
         {% endif %}
       {% endfor %}
       {% if has_variadic and pack and ('const' in pack.full) %}
