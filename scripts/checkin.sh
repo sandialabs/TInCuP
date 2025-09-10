@@ -47,6 +47,25 @@ echo "🧹 Pre-step: Cleaning local build directories..."
 echo "✅ Clean step complete"
 echo ""
 
+# Pre-step: Compatibility CMake subdir rebuild (captures build/build_systems/cmake/build.log)
+if command -v cmake >/dev/null 2>&1; then
+    echo "🏗️  Pre-step: Running compatibility CMake subdir rebuild..."
+    COMPAT_BDIR="$PROJECT_ROOT/build/build_systems/cmake"
+    rm -rf "$COMPAT_BDIR"
+    mkdir -p "$COMPAT_BDIR"
+    {
+        echo "=== CMake Configure (build_systems/cmake) ==="
+        cmake -S "$PROJECT_ROOT/build_systems/cmake" -B "$COMPAT_BDIR"
+        echo "=== CMake Build (build_systems/cmake) ==="
+        cmake --build "$COMPAT_BDIR" -j
+    } | tee "$COMPAT_BDIR/build.log"
+    echo "✅ Compatibility rebuild complete → $COMPAT_BDIR/build.log"
+    echo ""
+else
+    echo "⚠ Skipping compatibility CMake subdir rebuild (cmake not found)"
+    echo ""
+fi
+
 # Step 1: Generate single header
 echo "📦 Step 1: Generating single header..."
 cd "$SCRIPT_DIR"

@@ -223,7 +223,7 @@ struct type_list<First,Rest...> {
    */
   template<class T>
   requires contains_type<T>
-  static constexpr std::size_t index_of = index_of<T,First,Rest...>::value;
+  static constexpr std::size_t index_of_v = ::tincup::index_of<T,First,Rest...>::value;
 
   /**
    * @brief Helper function to deduce if there are no repeated types.
@@ -327,7 +327,6 @@ template<template<std::size_t> class T, std::size_t N>
 using indexed_type_list_t = typename indexed_type_list<T>::template type<N>;
 
 } // namespace tincup
-
 
 
 

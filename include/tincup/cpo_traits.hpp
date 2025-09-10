@@ -256,7 +256,7 @@ struct cpo_traits {
     if constexpr (arity == 0) return std::size_t{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
       // Count indices that are the first occurrence of their type
-      return (std::size_t{0} + ... + (decayed_arg_types_list::template index_of<typename decayed_arg_types_list::template type<Is>> == Is ? std::size_t{1} : std::size_t{0}));
+      return (std::size_t{0} + ... + (decayed_arg_types_list::template index_of_v<typename decayed_arg_types_list::template type<Is>> == Is ? std::size_t{1} : std::size_t{0}));
     }(std::make_index_sequence<arity>{});
   }();
 
@@ -264,7 +264,7 @@ struct cpo_traits {
     if constexpr (arity == 0) return std::size_t{0};
     else return []<std::size_t...Is>(std::index_sequence<Is...>) {
       using list = raw_arg_types_list;
-      return (std::size_t{0} + ... + (list::template index_of<typename list::template type<Is>> == Is ? std::size_t{1} : std::size_t{0}));
+      return (std::size_t{0} + ... + (list::template index_of_v<typename list::template type<Is>> == Is ? std::size_t{1} : std::size_t{0}));
     }(std::make_index_sequence<arity>{});
   }();
 
