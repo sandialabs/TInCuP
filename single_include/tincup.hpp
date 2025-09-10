@@ -554,10 +554,9 @@ namespace tincup {
 template<typename Derived> 
 struct cpo_base : public cpo_introspection<Derived>,
                   public cpo_diagnostics<Derived> {
-  // Catch-all fallback using immediate context SFINAE - only matches when derived has no operator()
-  // This uses C++20 immediate context rules to avoid circular dependency
   template<typename... Args>
-    requires (!std::invocable<Derived,Args...>)
+//    requires (!tincup::tag_invocable_c<Derived, Args...>)	  
+//    requires (!std::invocable<Derived,Args...>)
     constexpr void operator()(Args&&... args) const {
     this->enhanced_fail(std::forward<Args>(args)...);
   }
