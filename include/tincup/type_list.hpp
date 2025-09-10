@@ -151,7 +151,7 @@ struct concatenate_type_lists<type_list<Ts...>, type_list<Us...>, Rest...> {
  * @tparam Lists The type_lists to concatenate.
  */
 template<type_list_c... Lists>
-using concatenate_type_lists = typename concatenate_type_lists<Lists...>::type;
+using concatenate_type_lists_t = typename concatenate_type_lists<Lists...>::type;
 
 
 /**
@@ -327,7 +327,6 @@ template<template<std::size_t> class T, std::size_t N>
 using indexed_type_list_t = typename indexed_type_list<T>::template type<N>;
 
 } // namespace tincup
-
 
 
 

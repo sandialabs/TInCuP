@@ -27,6 +27,26 @@ echo "Script directory: $SCRIPT_DIR"
 echo "Project root: $PROJECT_ROOT"
 echo ""
 
+# Pre-step: clean stale local build directories to avoid false positives
+echo "🧹 Pre-step: Cleaning local build directories..."
+{
+    # Common local build trees created by manual builds or previous runs
+    CANDIDATE_DIRS=(
+        "$PROJECT_ROOT/build"
+        "$PROJECT_ROOT/build_tmp"
+        "$PROJECT_ROOT/local_ci_build"
+        "$PROJECT_ROOT/build_systems/cmake/build"
+    )
+    for d in "${CANDIDATE_DIRS[@]}"; do
+        if [ -d "$d" ]; then
+            echo "  - Removing $d"
+            rm -rf "$d"
+        fi
+    done
+}
+echo "✅ Clean step complete"
+echo ""
+
 # Step 1: Generate single header
 echo "📦 Step 1: Generating single header..."
 cd "$SCRIPT_DIR"

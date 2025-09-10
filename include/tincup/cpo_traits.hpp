@@ -77,9 +77,9 @@ struct cpo_traits {
   template<std::size_t I>
   using decayed_arg_t = std::remove_cvref_t<arg_t<I>>;
 
-  // TypeList views of the argument types
-  using arg_types_list = TypeList<Args...>;
-  using decayed_arg_types_list = TypeList<std::remove_cvref_t<Args>...>;
+  // type_list views of the argument types
+  using arg_types_list = type_list<Args...>;
+  using decayed_arg_types_list = type_list<std::remove_cvref_t<Args>...>;
   
   template<typename T>
   struct remove_all_pointers { using type = T; };
@@ -87,7 +87,7 @@ struct cpo_traits {
   struct remove_all_pointers<T*> { using type = typename remove_all_pointers<T>::type; };
   template<typename T>
   using remove_all_pointers_t = typename remove_all_pointers<T>::type;
-  using raw_arg_types_list = TypeList<remove_all_pointers_t<std::remove_cvref_t<Args>>...>;
+  using raw_arg_types_list = type_list<remove_all_pointers_t<std::remove_cvref_t<Args>>...>;
 
   // Check if all arguments are references
   static constexpr bool all_args_are_refs = (std::is_reference_v<Args> && ...);
