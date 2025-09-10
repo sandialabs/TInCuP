@@ -516,9 +516,6 @@ protected:
 
 
 
-template<typename...Args>
-auto tag_invoke(Args&&...);
-
 namespace tincup {
 
 template<typename Derived>

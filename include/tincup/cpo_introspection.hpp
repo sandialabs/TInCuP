@@ -13,9 +13,6 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 #include <type_traits>
 #include <utility>
 
-template<typename...Args>
-auto tag_invoke(Args&&...);
-
 namespace tincup {
 
 template<typename Derived>
