@@ -5,6 +5,8 @@
 inline constexpr struct {{ cpo_name }}_ftor final : tincup::cpo_base<{{ cpo_name }}_ftor> {
   TINCUP_CPO_TAG("{{ cpo_name }}")
   inline static constexpr bool is_variadic = {{ 'true' if has_variadic else 'false' }};
+  // Re-expose base operator() so failures route to diagnostics
+  using tincup::cpo_base<{{ cpo_name }}_ftor>::operator();
 
 {{ typed_operator_overloads(cpo_name, "", arg_pairs, arg_names, concept_types, canonical_concept_args) }}
 } {{ cpo_name }};
