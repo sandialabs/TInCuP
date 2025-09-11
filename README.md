@@ -73,8 +73,8 @@ Want to experiment with TInCuP before installing? Use our Compiler Explorer exam
 
 ### Enhanced Error Diagnostics:
 
-  | Error \ Compiler                        | clang-20.1.0                             | x86-64 gcc 14.1                          |
-  | :---                                    | :---                                     | :---                                     |
+  | Error \ Compiler                        | x86-64 clang-20.1.0                      | x86-64 gcc 14.1                          |
+  | :---                                    | :---:                                    | :---:                                    |
   | Forgetting to Dereference a Pointer     | [CLICK](https://godbolt.org/z/vTG4hrKrx) | [CLICK](https://godbolt.org/z/baEqsshvY) |
   | Passing a `const` When Mutable Expected | [CLICK](https://godbolt.org/z/Mdc381Gz4) | [CLICK](https://godbolt.org/z/n8rd68WYG) |
   | Incorrect Argument Order                | [CLICK](https://godbolt.org/z/349nK567j) | [CLICK](https://godbolt.org/z/zhPh7rha5) |
