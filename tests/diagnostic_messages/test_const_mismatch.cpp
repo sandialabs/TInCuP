@@ -8,7 +8,11 @@ Government retains certain rights in this software.
 Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 */
 
+#ifdef COMPILER_EXPLORER
+#include <https://raw.githubusercontent.com/sandialabs/TInCuP/main/single_include/tincup.hpp>
+#else
 #include "single_include/tincup.hpp"
+#endif
 
 // This CPO expects a non-const reference
 inline constexpr struct mutating_op_ftor final : tincup::cpo_base<mutating_op_ftor> {
