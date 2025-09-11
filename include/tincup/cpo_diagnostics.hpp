@@ -22,9 +22,9 @@ namespace detail {
       return []<typename T1, typename T2>(std::type_identity<T1>, std::type_identity<T2>) {
         // Only check if swapped (T2, T1) instead of (T1, T2) works
         return requires {
-          tag_invoke_cpo(std::declval<const Derived&>(), 
-                        std::declval<T2>(), 
-                        std::declval<T1>()); 
+          tag_invoke(std::declval<const Derived&>(), 
+                     std::declval<T2>(), 
+                     std::declval<T1>()); 
         };
       }(std::type_identity<Args>{}...);
     }
@@ -41,13 +41,13 @@ namespace detail {
       // Maybe they meant to call a binary CPO?
       return []<typename T>(std::type_identity<T>) {
         using ArgType = T;
-        return requires { tag_invoke_cpo(std::declval<const Derived&>(), std::declval<ArgType>(), std::declval<ArgType>()); };
+        return requires { tag_invoke(std::declval<const Derived&>(), std::declval<ArgType>(), std::declval<ArgType>()); };
       }(std::type_identity<Args>{}...);
     } else if constexpr (current_arity == 3) {
       // Maybe they meant a binary CPO (common mistake in generic code)?
       return []<typename T1, typename T2, typename T3>(std::type_identity<T1>, std::type_identity<T2>, std::type_identity<T3>) {
-        return requires { tag_invoke_cpo(std::declval<const Derived&>(), std::declval<T1>(), std::declval<T2>()); } ||
-               requires { tag_invoke_cpo(std::declval<const Derived&>(), std::declval<T2>(), std::declval<T3>()); };
+        return requires { tag_invoke(std::declval<const Derived&>(), std::declval<T1>(), std::declval<T2>()); } ||
+               requires { tag_invoke(std::declval<const Derived&>(), std::declval<T2>(), std::declval<T3>()); };
       }(std::type_identity<Args>{}...);
     }
     return false;
@@ -168,8 +168,8 @@ protected:
 
 #ifndef TINCUP_DISABLE_POINTER_DIAGNOSTICS
   constexpr bool deref_works = requires { 
-    tag_invoke_cpo(derived_cpo, 
-		   deref_if_needed(std::forward<Args>(args))...); 
+    tag_invoke(derived_cpo, 
+               deref_if_needed(std::forward<Args>(args))...); 
   };
 #else
     constexpr bool deref_works = false;
@@ -177,10 +177,10 @@ protected:
 
 #ifndef TINCUP_DISABLE_CONST_DIAGNOSTICS
     constexpr bool unconst_works = requires { 
-      tag_invoke_cpo(derived_cpo, const_cast_if_needed(std::forward<Args>(args))...); 
+      tag_invoke(derived_cpo, const_cast_if_needed(std::forward<Args>(args))...); 
     };
     constexpr bool both_works = requires { 
-      tag_invoke_cpo(derived_cpo, const_cast_if_needed(deref_if_needed(std::forward<Args>(args)))...);     };
+      tag_invoke(derived_cpo, const_cast_if_needed(deref_if_needed(std::forward<Args>(args)))...); };
 #else
       constexpr bool unconst_works = false;
       constexpr bool both_works = false;
