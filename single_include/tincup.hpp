@@ -367,7 +367,7 @@ protected:
 		       !std::is_same_v<std::remove_cvref_t<T>, deref_t<T>>;
 
 // C++26 user-generated static_assert message support
-#if __cpp_static_assert >= 202306L
+#if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
   // Message structure for C++26 user-generated static_assert  
   struct diagnostic_message {
     constexpr diagnostic_message(std::string_view msg) : view(msg) {}
@@ -430,7 +430,7 @@ protected:
 #endif
 
       if constexpr (deref_works) {
-#if __cpp_static_assert >= 202306L
+#if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
         // C++26: User-generated static_assert with CPO name
         static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>());
 #elif __cplusplus >= 202302L
@@ -447,7 +447,7 @@ protected:
           "that may need explicit dereferencing. Consider: cpo(*ptr) instead of cpo(ptr)");
 #endif
       } else if constexpr (unconst_works) {
-#if __cpp_static_assert >= 202306L
+#if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
         // C++26: User-generated static_assert with CPO name
         static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>());
 #elif __cplusplus >= 202302L
@@ -464,7 +464,7 @@ protected:
           "Consider: cpo(non_const_obj) instead of cpo(const_obj)");
 #endif
       } else if constexpr (both_works) {
-#if __cpp_static_assert >= 202306L
+#if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
         // C++26: User-generated static_assert with CPO name
         static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>());
 #elif __cplusplus >= 202302L
@@ -481,7 +481,7 @@ protected:
           "and to remove const-qualification. Consider: cpo(*non_const_ptr) instead of cpo(const_ptr)");
 #endif
       } else if constexpr (binary_swap_works) {
-#if __cpp_static_assert >= 202306L
+#if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
         // C++26: User-generated static_assert with CPO name
         static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>());
 #elif __cplusplus >= 202302L
@@ -497,7 +497,7 @@ protected:
           "Check the expected argument order for this CPO.");
 #endif
       } else if constexpr (arity_mismatch) {
-#if __cpp_static_assert >= 202306L
+#if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
         // C++26: User-generated static_assert with CPO name
         static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>());
 #elif __cplusplus >= 202302L
@@ -515,7 +515,7 @@ protected:
       } else {
         // Fallback to basic diagnostic with argument type display
         [[maybe_unused]] show_argument_types<Args...> display_types{};
- #if __cpp_static_assert >= 202306L
+ #if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
         // C++26: User-generated static_assert with CPO name (fallback case)
         static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>());
 #else
