@@ -49,7 +49,7 @@ template<typename T, typename...As>
 concept has_generator_arg_traits_c = requires { typename T::template arg_traits<As...>; };
 
 // Enhanced introspection helper for CPOs
-template<cpo_c Cp, typename...Args>
+template<typename Cp, typename...Args>
 struct cpo_traits {
   static constexpr bool invocable = is_invocable_v<Cp,Args...>;
   static constexpr bool nothrow_invocable = is_nothrow_invocable_v<Cp,Args...>;
