@@ -1,7 +1,7 @@
 # Makefile for tincup project
 # Provides convenient targets for development workflow
 
-.PHONY: test test-patterns test-verification test-coverage install-dev clean help ci-local ci-quick test-cmake test-meson test-examples test-headers update-readme-examples preview-readme-examples
+.PHONY: test test-patterns test-verification test-coverage install-dev clean help ci-local ci-quick test-cmake test-meson test-examples test-headers generate-examples-docs preview-examples-docs
 
 # Default target
 help:
@@ -26,8 +26,8 @@ help:
 	@echo "  install-dev       - Install development dependencies"
 	@echo "  verify-cpos       - Verify CPO patterns in project"
 	@echo "  generate-cpo-registry - Scan headers and write docs/cpo_registry.{json,md}"
-	@echo "  update-readme-examples - Update README.md examples with current generator output"
-	@echo "  preview-readme-examples - Preview README.md examples updates without applying"
+	@echo "  generate-examples-docs - Generate docs/examples.md with current generator output"
+	@echo "  preview-examples-docs - Preview examples documentation updates without applying"
 	@echo "  clean             - Clean up generated files"
 
 # Run all tests
@@ -58,13 +58,13 @@ verify-cpos:
 generate-cpo-registry:
 	python3 cpo_tools/cpo_registry.py --root include --out docs
 
-# Update README.md examples with current generator output (JSON-driven)
-update-readme-examples:
-	python3 scripts/update_readme_examples.py
+# Generate docs/examples.md with current generator output (JSON-driven)
+generate-examples-docs:
+	cd ../.. && python3 scripts/generate_examples_doc.py
 
-# Preview README.md examples updates without applying
-preview-readme-examples:
-	python3 scripts/update_readme_examples.py --dry-run
+# Preview examples documentation updates without applying
+preview-examples-docs:
+	cd ../.. && python3 scripts/generate_examples_doc.py --dry-run
 
 # Git hook for pre-commit CPO verification
 install-git-hook:

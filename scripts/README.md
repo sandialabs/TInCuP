@@ -2,9 +2,15 @@
 
 This directory contains utility scripts for maintaining the TInCuP project.
 
-## `update_readme_examples.py`
+## Examples Documentation
 
-**JSON-driven approach** that automatically regenerates the entire Examples section in README.md from a configuration file. This is the modern, maintainable approach.
+### `generate_examples_doc.py` *(Recommended)*
+
+**JSON-driven approach** that automatically generates comprehensive examples documentation in `docs/examples.md` from a configuration file. This creates a standalone examples document with collapsible sections.
+
+### `update_readme_examples.py` *(Deprecated)*
+
+**Legacy script** for updating README examples directly. **Note**: Since documentation restructuring, examples are now maintained in separate `docs/examples.md` file. Use `generate_examples_doc.py` instead.
 
 ### Configuration File: `readme_examples.json`
 
@@ -36,18 +42,21 @@ Examples are defined declaratively in JSON format:
 ### Usage
 
 ```bash
-# Update README.md with latest generator output
-python3 scripts/update_readme_examples.py
+# Generate docs/examples.md with latest generator output
+python3 scripts/generate_examples_doc.py
 
-# Preview what would be updated without making changes
-python3 scripts/update_readme_examples.py --dry-run
+# Preview what would be generated without making changes
+python3 scripts/generate_examples_doc.py --dry-run
 
 # Use custom configuration file
-python3 scripts/update_readme_examples.py --config custom.json
+python3 scripts/generate_examples_doc.py --config custom.json
 
 # Via Make targets (convenient aliases)
-make update-readme-examples
-make preview-readme-examples
+make generate-examples-docs
+make preview-examples-docs
+
+# Via main project Makefile
+make examples
 ```
 
 ### Expected Format

@@ -4,12 +4,14 @@ project('tincup', 'cpp',
   version : run_command('sh', '-c',
                         'if [ -f ../../VERSION ]; then cat ../../VERSION; '
                         + 'elif [ -f VERSION ]; then cat VERSION; '
-                        + 'else echo 0.0.0; fi').stdout().strip(),
+                        + 'else echo 0.0.0; fi',
+                        check: false).stdout().strip(),
   # Grab license type from the first line of LICENSE; fallback to BSD 3-Clause
   license : run_command('sh', '-c',
                         'if [ -f ../../LICENSE ]; then head -n1 ../../LICENSE; '
                         + 'elif [ -f LICENSE ]; then head -n1 LICENSE; '
-                        + 'else echo BSD 3-Clause License; fi').stdout().strip(),
+                        + 'else echo BSD 3-Clause License; fi',
+                        check: false).stdout().strip(),
   default_options : ['cpp_std=c++20', 'warning_level=3'])
 
 # Reference the header within this subproject's directory structure

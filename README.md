@@ -67,7 +67,7 @@ TInCuP bridges the gap between `tag_invoke`'s theoretical benefits and practical
 
 Want to experiment with TInCuP before installing? Use our Compiler Explorer examples:
 
-- Compiler flags used: `-std=c++20 -O2 -DTINCUP_DIAGNOSTIC_LEVEL=2`
+- Compiler flags used: `-std=c++20 -O2 -DTINCUP_DIAGNOSTIC_LEVEL=3`
 * [Basic Printing](https://godbolt.org/z/3945vq437)
 * [Bool Dispatch](https://godbolt.org/z/K1xcqqPad)
 * Enhanced Error Diagnostics:
@@ -96,6 +96,10 @@ Troubleshooting CLI on macOS/Linux:
 **New to the project?** See our **[Getting Started Guide](docs/user_guide/getting_started.md)**.
 
 For full documentation, including guides on the C++ library, code generator, build system integration, and more, please see the **[TInCuP Documentation](docs/index.md)**.
+
+**Want to see examples?** Check out:
+- **[Generated CPO Examples](docs/examples.md)** - Auto-generated examples showing different CPO patterns
+- **[Working Examples](examples/)** - Complete, buildable projects demonstrating real-world usage
 
 ## Get, Feedback, Contribute
 

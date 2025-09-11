@@ -12,7 +12,6 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 
 #include <array>
 #include <cstdint>
-#include <tuple>
 #include "type_list.hpp"
 #include <type_traits>
 #include <string_view>
@@ -71,9 +70,9 @@ struct cpo_traits {
 
   // Type classification helpers
   template<std::size_t I>
-  using arg_t = std::tuple_element_t<I, std::tuple<Args...>>;
+  using arg_t = typename type_list_element<I, type_list<Args...>>::type;
 
-  using args_tuple = std::tuple<Args...>;
+  using args_list = type_list<Args...>;
   template<std::size_t I>
   using decayed_arg_t = std::remove_cvref_t<arg_t<I>>;
 

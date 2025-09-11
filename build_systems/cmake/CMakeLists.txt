@@ -49,14 +49,6 @@ if(TINCUP_ENABLE_TESTING)
   enable_testing()
 endif()
 
-# Only add the examples if they are enabled AND we are building the main project,
-# not an external project (like the smoke test) that includes this one.
-message(STATUS "TINCUP DEBUG: ENABLE_EXAMPLES=${ENABLE_EXAMPLES}, TINCUP_IS_MAIN_PROJECT=${TINCUP_IS_MAIN_PROJECT}, CMAKE_PROJECT_NAME=${CMAKE_PROJECT_NAME}, PROJECT_NAME=${PROJECT_NAME}")
-if(ENABLE_EXAMPLES AND TINCUP_IS_MAIN_PROJECT)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../examples
-                   ${CMAKE_CURRENT_BINARY_DIR}/../../examples)
-endif()
-
 # --- Tests ---
 # Build and register tests only when testing is enabled and this is the main project
 if(TINCUP_ENABLE_TESTING AND TINCUP_IS_MAIN_PROJECT)

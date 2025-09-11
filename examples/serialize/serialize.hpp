@@ -9,7 +9,7 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 */
 
 #pragma once
-#include <tincup/tincup.hpp>
+#include "../../single_include/tincup.hpp"
 #include <string>
 #include <vector>
 

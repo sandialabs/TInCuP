@@ -14,7 +14,7 @@ echo "=== TInCuP Pre-Checkin Script ==="
 echo "This script will:"
 echo "1. Generate the single header file"
 echo "2. Update README install version"
-echo "3. Update README examples"
+echo "3. Generate examples documentation"
 echo "4. Check copyright banners"
 echo "5. Run local CI tests"
 echo ""
@@ -90,14 +90,14 @@ else
 fi
 echo ""
 
-# Step 3: Update README examples
-echo "📝 Step 3: Updating README examples..."
+# Step 3: Generate examples documentation
+echo "📝 Step 3: Generating examples documentation..."
 cd "$PROJECT_ROOT"
-python3 scripts/update_readme_examples.py
+python3 scripts/generate_examples_doc.py
 if [ $? -eq 0 ]; then
-    echo "✅ README examples updated"
+    echo "✅ Examples documentation generated"
 else
-    echo "❌ Updating README examples failed"
+    echo "❌ Generating examples documentation failed"
     exit 1
 fi
 echo ""

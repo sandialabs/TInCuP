@@ -10,12 +10,18 @@
 """
 README Examples Updater (JSON-driven approach)
 
-Automatically regenerates the Examples section in README.md from a JSON configuration file.
+⚠️  DEPRECATED: This script is deprecated since documentation restructuring.
+    Use scripts/generate_examples_doc.py to generate docs/examples.md instead.
+
+Legacy functionality: Automatically regenerates the Examples section in README.md from a JSON configuration file.
 This replaces pattern matching with a clean, declarative approach where examples are
 defined in JSON and the entire Examples section is regenerated from scratch.
 
 Usage:
     python3 scripts/update_readme_examples.py [--dry-run] [--readme PATH] [--config PATH]
+    
+Recommended alternative:
+    python3 scripts/generate_examples_doc.py [--dry-run] [--config PATH] [--output PATH]
 """
 
 import argparse
