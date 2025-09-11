@@ -63,6 +63,21 @@ TInCuP bridges the gap between `tag_invoke`'s theoretical benefits and practical
 *   **IDE/Editor Integration**: Full support for Vim, VSCode, and CLion with plugins, templates, and external tools.
 *   **Modern & Friendly**: Designed with modern C++ and Python practices to be user-friendly and easy to extend.
 
+## Try Before Installing
+
+Want to experiment with TInCuP before installing? Use our Compiler Explorer examples:
+
+- Compiler flags used: `-std=c++20 -O2 -DTINCUP_DIAGNOSTIC_LEVEL=2`
+* [Basic Printing](https://godbolt.org/z/3945vq437)
+* [Bool Dispatch](https://godbolt.org/z/K1xcqqPad)
+* Enhanced Error Diagnostics:
+  - [Forgetting to dereference](https://godbolt.org/z/TKbvz8fMd)
+
+These examples demonstrate that TInCuP:
+- ✅ Works with all major compilers (GCC, Clang, MSVC)
+- ✅ Produces optimal assembly (check the "Add New → Opt Output" panel)
+- ✅ Provides clear error messages
+
 ## Installation
 
 - Python tools (latest): `pip install TInCuP` (installs the `cpo-generator` CLI)
@@ -90,7 +105,7 @@ For full documentation, including guides on the C++ library, code generator, bui
   - Source: `git clone https://github.com/sandialabs/TInCuP.git && cd TInCuP && pip install -e .`
 - **Feedback** (bugs/enhancements): Open an issue: https://github.com/sandialabs/TInCuP/issues
 - **Security** reports: see [SECURITY.md](SECURITY.md)
-- **Contribute**: Read [CONTRIBUTING.md](CONTRIBUTING.md) and follow our [Code of Conduct](CODE_OF_CONDUCT.md)
+- **Contribute**: Read [CONTRIBUTING.md](docs/development/contributing.md) and follow our [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## Supported Compilers
 
