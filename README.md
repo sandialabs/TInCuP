@@ -67,7 +67,6 @@ TInCuP bridges the gap between `tag_invoke`'s theoretical benefits and practical
 
 Want to experiment with TInCuP before installing? Use our Compiler Explorer examples:
 
-- Compiler flags used: `-std=c++20 -Wno-c++26-extensions -O2 -DTINCUP_DIAGNOSTIC_LEVEL=3 -DCOMPILER_EXPLORER`
 * [Basic Printing](https://godbolt.org/z/3945vq437)
 * [Bool Dispatch](https://godbolt.org/z/K1xcqqPad)
 
@@ -79,6 +78,8 @@ Want to experiment with TInCuP before installing? Use our Compiler Explorer exam
   | Passing a `const` When Mutable Expected | [CLICK](https://godbolt.org/z/Mdc381Gz4) | [CLICK](https://godbolt.org/z/n8rd68WYG) |
   | Incorrect Argument Order                | [CLICK](https://godbolt.org/z/349nK567j) | [CLICK](https://godbolt.org/z/zhPh7rha5) |
   | Incorrect Arity                         | [CLICK](https://godbolt.org/z/9dfaahc73) | [CLICK](https://godbolt.org/z/Echj4Tf35) |
+
+Compiler flags used: `-std=c++20 -Wno-c++26-extensions -O2 -DTINCUP_DIAGNOSTIC_LEVEL=3 -DCOMPILER_EXPLORER`
 
 ## Installation
 
