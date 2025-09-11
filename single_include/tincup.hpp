@@ -390,10 +390,73 @@ protected:
   } 
 #endif
 
+  // Advanced diagnostic analysis using cpo_traits
+  template<typename... Args>
+  static constexpr auto analyze_arguments() {
+    if constexpr (sizeof...(Args) > 0) {
+      using traits = cpo_traits<Derived, Args...>;
+      
+      struct analysis {
+        static constexpr auto arity = traits::arity;
+        static constexpr auto pointers_mask = traits::pointers_mask;
+        static constexpr auto const_qualified_mask = traits::const_qualified_mask;
+        static constexpr auto lvalue_refs_mask = traits::lvalue_refs_mask;
+        static constexpr auto rvalue_refs_mask = traits::rvalue_refs_mask;
+        
+        // Count problematic arguments by category
+        static constexpr std::size_t pointer_count = __builtin_popcountll(pointers_mask);
+        static constexpr std::size_t const_count = __builtin_popcountll(const_qualified_mask);
+        static constexpr std::size_t lvalue_ref_count = __builtin_popcountll(lvalue_refs_mask);
+        static constexpr std::size_t rvalue_ref_count = __builtin_popcountll(rvalue_refs_mask);
+        
+        // Pattern detection
+        static constexpr bool all_pointers = (pointer_count == arity);
+        static constexpr bool all_const = (const_count == arity);
+        static constexpr bool mixed_ref_types = (lvalue_ref_count > 0 && rvalue_ref_count > 0);
+        static constexpr bool all_rvalue_refs = (rvalue_ref_count == arity);
+        
+        // First problematic argument indices (for targeted messages)
+        static constexpr std::size_t first_pointer_arg = pointers_mask ? __builtin_ctzll(pointers_mask) : arity;
+        static constexpr std::size_t first_const_arg = const_qualified_mask ? __builtin_ctzll(const_qualified_mask) : arity;
+      };
+      return analysis{};
+    } else {
+      struct empty_analysis {
+        static constexpr std::size_t arity = 0;
+      };
+      return empty_analysis{};
+    }
+  }
+
+  // Macro-based diagnostic helpers for C++20/23 (creates verbose template errors)
+  #define TINCUP_DIAGNOSTIC_POINTER_ARG(CPO, ARG_INDEX, ARG_TYPE) \
+    template<typename = void> struct CPO##_diagnostic_pointer_arg_##ARG_INDEX { \
+      static_assert(always_false_v<ARG_TYPE>, \
+        "POINTER ARGUMENT DETECTED: Argument " #ARG_INDEX " has type " #ARG_TYPE \
+        " but this CPO expects a dereferenced type. Try using operator* on this argument."); \
+    }
+
+  #define TINCUP_DIAGNOSTIC_CONST_ARG(CPO, ARG_INDEX, ARG_TYPE) \
+    template<typename = void> struct CPO##_diagnostic_const_arg_##ARG_INDEX { \
+      static_assert(always_false_v<ARG_TYPE>, \
+        "CONST ARGUMENT DETECTED: Argument " #ARG_INDEX " has type " #ARG_TYPE \
+        " but this mutating CPO requires non-const access. Remove const qualification."); \
+    }
+
+  #define TINCUP_DIAGNOSTIC_MIXED_REFS(CPO, LVALUE_COUNT, RVALUE_COUNT) \
+    template<typename = void> struct CPO##_diagnostic_mixed_refs { \
+      static_assert(always_false_v<CPO>, \
+        "MIXED REFERENCE TYPES: Found " #LVALUE_COUNT " lvalue refs and " #RVALUE_COUNT \
+        " rvalue refs. This CPO expects consistent reference types."); \
+    }
+
   // Enhanced diagnostic helper - reduces boilerplate in generated CPOs
   template<typename... Args>
   constexpr void enhanced_fail(Args&&... args) const {
 	  
+    // Advanced argument analysis using cpo_traits
+    constexpr auto analysis = analyze_arguments<Args...>();
+    
     // Try various combinations to provide helpful diagnostics (respecting opt-out flags)
     const auto& derived_cpo = static_cast<const Derived&>(*this);
 
@@ -431,11 +494,29 @@ protected:
 
       if constexpr (deref_works) {
 #if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
-        // C++26: Enhanced pointer diagnostic with user-generated static_assert
-        static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
-          "No valid tag_invoke overload for this CPO, but there IS a valid "
-          "overload for the dereferenced arguments. Some arguments appear to be pointers/smart_ptrs "
-          "that may need explicit dereferencing. Consider: cpo(*ptr) instead of cpo(ptr)"));
+        // C++26: Enhanced pointer diagnostic with detailed argument analysis
+        if constexpr (analysis.arity > 0) {
+          if constexpr (analysis.all_pointers) {
+            static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+              "ALL ARGUMENTS ARE POINTERS: All arguments need dereferencing. "
+              "This CPO expects dereferenced values, not pointers/smart_ptrs. "
+              "Try: cpo(*arg1, *arg2, ...)"));
+          } else if constexpr (analysis.pointer_count == 1) {
+            static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+              "SINGLE POINTER ARGUMENT: One argument needs dereferencing. "
+              "This CPO expects dereferenced values. Try using operator* on the pointer/smart_ptr argument."));
+          } else {
+            static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+              "MULTIPLE POINTER ARGUMENTS: Some arguments need dereferencing. "
+              "This CPO expects dereferenced values, not pointers/smart_ptrs. "
+              "Try dereferencing the pointer arguments with operator*."));
+          }
+        } else {
+          static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+            "No valid tag_invoke overload for this CPO, but there IS a valid "
+            "overload for the dereferenced arguments. Some arguments appear to be pointers/smart_ptrs "
+            "that may need explicit dereferencing. Consider: cpo(*ptr) instead of cpo(ptr)"));
+        }
 #elif __cplusplus >= 202302L
         // C++23: Enhanced pointer diagnostic (no dynamic concatenation)
         static_assert(always_false_v<Derived>,
@@ -443,7 +524,14 @@ protected:
           "Some arguments appear to be pointers/smart_ptrs needing dereferencing. "
           "Check template instantiation context above for specific argument types.");
 #else
-        // C++20: Pointer diagnostic with CPO name
+        // C++20: Advanced pointer diagnostic with template instantiation details
+        if constexpr (analysis.arity > 0 && analysis.pointer_count > 0) {
+          // Trigger detailed template errors showing specific problematic arguments
+          if constexpr (analysis.first_pointer_arg < analysis.arity) {
+            using problematic_arg = typename cpo_traits<Derived, Args...>::template arg_t<analysis.first_pointer_arg>;
+            [[maybe_unused]] TINCUP_DIAGNOSTIC_POINTER_ARG(Derived, analysis.first_pointer_arg, problematic_arg) trigger_error{};
+          }
+        }
         static_assert(always_false_v<Derived>,
           "CPO: No valid tag_invoke overload for CPO, but there IS a valid "
           "overload for the dereferenced arguments. Some arguments appear to be pointers/smart_ptrs "
@@ -451,11 +539,27 @@ protected:
 #endif
       } else if constexpr (unconst_works) {
 #if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
-        // C++26: Enhanced const diagnostic with user-generated static_assert
-        static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
-          "No valid tag_invoke overload for this CPO, but there IS a valid "
-          "overload for non-const arguments. You may be passing const objects to a mutating operation. "
-          "Consider: cpo(non_const_obj) instead of cpo(const_obj)"));
+        // C++26: Enhanced const diagnostic with detailed argument analysis
+        if constexpr (analysis.arity > 0) {
+          if constexpr (analysis.all_const) {
+            static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+              "ALL ARGUMENTS ARE CONST: This mutating CPO requires non-const access to all arguments. "
+              "Remove const qualifiers or use mutable references."));
+          } else if constexpr (analysis.const_count == 1) {
+            static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+              "SINGLE CONST ARGUMENT: One argument is const-qualified but this mutating CPO requires non-const access. "
+              "Remove const qualification from the problematic argument."));
+          } else {
+            static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+              "MULTIPLE CONST ARGUMENTS: Some arguments are const-qualified but this mutating CPO requires non-const access. "
+              "Remove const qualifiers from the problematic arguments."));
+          }
+        } else {
+          static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+            "No valid tag_invoke overload for this CPO, but there IS a valid "
+            "overload for non-const arguments. You may be passing const objects to a mutating operation. "
+            "Consider: cpo(non_const_obj) instead of cpo(const_obj)"));
+        }
 #elif __cplusplus >= 202302L
         // C++23: Enhanced const diagnostic
         static_assert(always_false_v<Derived>,
@@ -463,7 +567,14 @@ protected:
         "Some arguments may have incorrect const-qualification. "
           "Check template instantiation context above - you may be passing const objects to mutating operations.");
 #else
-        // C++20: Const diagnostic
+        // C++20: Advanced const diagnostic with template instantiation details
+        if constexpr (analysis.arity > 0 && analysis.const_count > 0) {
+          // Trigger detailed template errors showing specific problematic arguments
+          if constexpr (analysis.first_const_arg < analysis.arity) {
+            using problematic_arg = typename cpo_traits<Derived, Args...>::template arg_t<analysis.first_const_arg>;
+            [[maybe_unused]] TINCUP_DIAGNOSTIC_CONST_ARG(Derived, analysis.first_const_arg, problematic_arg) trigger_error{};
+          }
+        }
         static_assert(always_false_v<Derived>,
           "CPO: No valid tag_invoke overload for this CPO, but there IS a valid "
           "overload for non-const arguments. You may be passing const objects to a mutating operation. "
@@ -528,6 +639,29 @@ protected:
           "Check the expected number of arguments for this CPO.");
 #endif
       } else {
+        // Advanced pattern-based diagnostics for special cases
+        if constexpr (analysis.arity > 0) {
+          if constexpr (analysis.mixed_ref_types) {
+#if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
+            static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+              "MIXED REFERENCE TYPES: Arguments have inconsistent reference types (both lvalue and rvalue refs). "
+              "This CPO expects consistent reference categories. Check your argument forwarding."));
+#else
+            [[maybe_unused]] TINCUP_DIAGNOSTIC_MIXED_REFS(Derived, analysis.lvalue_ref_count, analysis.rvalue_ref_count) trigger_error{};
+#endif
+          } else if constexpr (analysis.all_rvalue_refs) {
+#if __cpp_static_assert >= 202306L && __cplusplus >= 202302L
+            static_assert(always_false_v<Derived>, make_cpo_error_message<Derived>(
+              "ALL RVALUE REFERENCES: All arguments are rvalue references, but this CPO may expect lvalue references. "
+              "Consider storing values in variables first, or check if you're using std::move() unnecessarily."));
+#else
+            static_assert(always_false_v<Derived>,
+              "CPO: All arguments are rvalue references. This CPO may expect lvalue references or stored values. "
+              "Consider: auto var = value; cpo(var); instead of cpo(std::move(value))");
+#endif
+          }
+        }
+        
         // Fallback to basic diagnostic with argument type display
         [[maybe_unused]] show_argument_types<Args...> display_types{};
  #if __cpp_static_assert >= 202306L && __cplusplus >= 202302L

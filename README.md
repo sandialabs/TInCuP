@@ -427,6 +427,8 @@ cpo-generator {"cpo_name": "generic_cpo", "args": ["$T1&: arg1", "$T2&: arg2"]}
 inline constexpr struct generic_cpo_ftor final : tincup::cpo_base<generic_cpo_ftor> {
   TINCUP_CPO_TAG("generic_cpo")
   inline static constexpr bool is_variadic = false;
+  // Re-expose base operator() so failures route to diagnostics
+  using tincup::cpo_base<generic_cpo_ftor>::operator();
     // Typed operator() overload - positive case only (generic)
   // Negative cases handled by tagged fallback in cpo_base
   template<typename T1, typename T2>
@@ -469,53 +471,53 @@ namespace tincup {
     static constexpr std::size_t fixed_arity = 2;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
-      unsigned long long m = 0ull;
-      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      tincup::arity_type m = tincup::arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr unsigned long long values_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type values_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       // Fixed positions
       // Pack positions
       return m;
     }();
 
     // Pointers mask
-    static constexpr unsigned long long pointers_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type pointers_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr unsigned long long lvalue_refs_mask = []{
-      unsigned long long m = 0ull;
- m |= (1ull << 0);  m |= (1ull << 1);       return m;
+    static constexpr tincup::arity_type lvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
+ m |= (tincup::arity_type{1} << 0);  m |= (tincup::arity_type{1} << 1);       return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr unsigned long long rvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type rvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Forwarding refs mask
-    static constexpr unsigned long long forwarding_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type forwarding_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr unsigned long long lvalue_const_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr unsigned long long const_qualified_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type const_qualified_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
   };
@@ -540,6 +542,8 @@ cpo-generator {"cpo_name": "concrete_cpo", "args": ["int: value", "double&: ref"
 inline constexpr struct concrete_cpo_ftor final : tincup::cpo_base<concrete_cpo_ftor> {
   TINCUP_CPO_TAG("concrete_cpo")
   inline static constexpr bool is_variadic = false;
+  // Re-expose base operator() so failures route to diagnostics
+  using tincup::cpo_base<concrete_cpo_ftor>::operator();
 
   // Typed operator() overload - positive case only (concrete)  
   // Negative cases handled by tagged fallback in cpo_base
@@ -568,33 +572,33 @@ namespace tincup {
   struct cpo_arg_traits<concrete_cpo_ftor,_A0, _A1> {
     static constexpr bool available = true;
     static constexpr std::size_t fixed_arity = 2;
-    static constexpr unsigned long long values_mask = []{
-      unsigned long long m = 0ull;
-        m |= (1ull << 0);
+    static constexpr tincup::arity_type values_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
+        m |= (tincup::arity_type{1} << 0);
       return m;
     }();
-    static constexpr unsigned long long pointers_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type pointers_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
-    static constexpr unsigned long long lvalue_refs_mask = []{
-      unsigned long long m = 0ull;
- m |= (1ull << 1);       return m;
+    static constexpr tincup::arity_type lvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
+ m |= (tincup::arity_type{1} << 1);       return m;
     }();
-    static constexpr unsigned long long rvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type rvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
-    static constexpr unsigned long long forwarding_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type forwarding_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
-    static constexpr unsigned long long lvalue_const_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
-    static constexpr unsigned long long const_qualified_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type const_qualified_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
   };
@@ -618,6 +622,8 @@ cpo-generator {"cpo_name": "forwarding_ref_cpo", "args": ["$T&&: fwd_ref"]}
 inline constexpr struct forwarding_ref_cpo_ftor final : tincup::cpo_base<forwarding_ref_cpo_ftor> {
   TINCUP_CPO_TAG("forwarding_ref_cpo")
   inline static constexpr bool is_variadic = false;
+  // Re-expose base operator() so failures route to diagnostics
+  using tincup::cpo_base<forwarding_ref_cpo_ftor>::operator();
     // Typed operator() overload - positive case only (generic)
   // Negative cases handled by tagged fallback in cpo_base
   template<typename T>
@@ -660,53 +666,53 @@ namespace tincup {
     static constexpr std::size_t fixed_arity = 1;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
-      unsigned long long m = 0ull;
-      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      tincup::arity_type m = tincup::arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr unsigned long long values_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type values_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       // Fixed positions
       // Pack positions
       return m;
     }();
 
     // Pointers mask
-    static constexpr unsigned long long pointers_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type pointers_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr unsigned long long lvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr unsigned long long rvalue_refs_mask = []{
-      unsigned long long m = 0ull;
- m |= (1ull << 0);       return m;
+    static constexpr tincup::arity_type rvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
+ m |= (tincup::arity_type{1} << 0);       return m;
     }();
 
     // Forwarding refs mask
-    static constexpr unsigned long long forwarding_refs_mask = []{
-      unsigned long long m = 0ull;
- m |= (1ull << 0);       return m;
+    static constexpr tincup::arity_type forwarding_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
+ m |= (tincup::arity_type{1} << 0);       return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr unsigned long long lvalue_const_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr unsigned long long const_qualified_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type const_qualified_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
   };
@@ -730,6 +736,8 @@ cpo-generator {"cpo_name": "variadic_cpo", "args": ["$T&...: variadic_args"]}
 inline constexpr struct variadic_cpo_ftor final : tincup::cpo_base<variadic_cpo_ftor> {
   TINCUP_CPO_TAG("variadic_cpo")
   inline static constexpr bool is_variadic = true;
+  // Re-expose base operator() so failures route to diagnostics
+  using tincup::cpo_base<variadic_cpo_ftor>::operator();
     // Typed operator() overload - positive case only (generic)
   // Negative cases handled by tagged fallback in cpo_base
   template<typename... T>
@@ -772,15 +780,15 @@ namespace tincup {
     static constexpr std::size_t fixed_arity = 0;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
-      unsigned long long m = 0ull;
-      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      tincup::arity_type m = tincup::arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr unsigned long long values_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type values_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       // Fixed positions
       // Pack positions
         // For packs, category is determined by the declared form of the pack
@@ -788,39 +796,39 @@ namespace tincup {
     }();
 
     // Pointers mask
-    static constexpr unsigned long long pointers_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type pointers_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr unsigned long long lvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
         m |= repeat_mask(fixed_arity, sizeof...(T));
       return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr unsigned long long rvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type rvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Forwarding refs mask
-    static constexpr unsigned long long forwarding_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type forwarding_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr unsigned long long lvalue_const_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr unsigned long long const_qualified_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type const_qualified_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
   };
@@ -843,7 +851,9 @@ cpo-generator {"cpo_name": "conditional_process", "args": ["$T&: data"], "runtim
 ```cpp
 inline constexpr struct conditional_process_ftor final : tincup::cpo_base<conditional_process_ftor> {
   TINCUP_CPO_TAG("conditional_process")
-  inline static constexpr bool is_variadic = false;  
+  inline static constexpr bool is_variadic = false;
+  // Re-expose base operator() so failures route to diagnostics
+  using tincup::cpo_base<conditional_process_ftor>::operator();  
   static constexpr struct fast_tag {} fast;
   static constexpr struct safe_tag {} safe;
 
@@ -912,53 +922,53 @@ namespace tincup {
     static constexpr std::size_t fixed_arity = 1;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
-      unsigned long long m = 0ull;
-      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      tincup::arity_type m = tincup::arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr unsigned long long values_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type values_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       // Fixed positions
       // Pack positions
       return m;
     }();
 
     // Pointers mask
-    static constexpr unsigned long long pointers_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type pointers_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr unsigned long long lvalue_refs_mask = []{
-      unsigned long long m = 0ull;
- m |= (1ull << 0);       return m;
+    static constexpr tincup::arity_type lvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
+ m |= (tincup::arity_type{1} << 0);       return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr unsigned long long rvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type rvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Forwarding refs mask
-    static constexpr unsigned long long forwarding_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type forwarding_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr unsigned long long lvalue_const_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr unsigned long long const_qualified_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type const_qualified_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
   };
@@ -990,7 +1000,9 @@ cpo-generator {"cpo_name": "compression_method", "args": ["$const T&: input"], "
 ```cpp
 inline constexpr struct compression_method_ftor final : tincup::cpo_base<compression_method_ftor> {
   TINCUP_CPO_TAG("compression_method")
-  inline static constexpr bool is_variadic = false;   
+  inline static constexpr bool is_variadic = false;
+  // Re-expose base operator() so failures route to diagnostics
+  using tincup::cpo_base<compression_method_ftor>::operator();   
   static constexpr struct lz4_tag {} lz4; 
   static constexpr struct zstd_tag {} zstd; 
   static constexpr struct gzip_tag {} gzip;
@@ -1082,54 +1094,54 @@ namespace tincup {
     static constexpr std::size_t fixed_arity = 1;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr unsigned long long repeat_mask(std::size_t offset, std::size_t count) {
-      unsigned long long m = 0ull;
-      for (std::size_t i = 0; i < count; ++i) m |= (1ull << (offset + i));
+    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      tincup::arity_type m = tincup::arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr unsigned long long values_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type values_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       // Fixed positions
       // Pack positions
       return m;
     }();
 
     // Pointers mask
-    static constexpr unsigned long long pointers_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type pointers_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr unsigned long long lvalue_refs_mask = []{
-      unsigned long long m = 0ull;
- m |= (1ull << 0);       return m;
+    static constexpr tincup::arity_type lvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
+ m |= (tincup::arity_type{1} << 0);       return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr unsigned long long rvalue_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type rvalue_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Forwarding refs mask
-    static constexpr unsigned long long forwarding_refs_mask = []{
-      unsigned long long m = 0ull;
+    static constexpr tincup::arity_type forwarding_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
       return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr unsigned long long lvalue_const_refs_mask = []{
-      unsigned long long m = 0ull;
- m |= (1ull << 0);       return m;
+    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
+ m |= (tincup::arity_type{1} << 0);       return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr unsigned long long const_qualified_mask = []{
-      unsigned long long m = 0ull;
- m |= (1ull << 0);       return m;
+    static constexpr tincup::arity_type const_qualified_mask = []{
+      tincup::arity_type m = tincup::arity_type{0};
+ m |= (tincup::arity_type{1} << 0);       return m;
     }();
   };
 }
@@ -1152,6 +1164,24 @@ auto compressed = compression_method(data, compression_method_ftor::lz4_tag{});
 - 🎯 Compiler can fully optimize each path independently  
 - 🔧 Both runtime convenience and compile-time performance
 - 🛡️ Type-safe dispatch with comprehensive error checking
+
+## Try Before Installing
+
+Want to experiment with TInCuP before installing? Use our Compiler Explorer examples:
+
+- Compiler flags used: `-std=c++20 -O2 -`
+* [Basic Printing](https://godbolt.org/z/3945vq437)
+* [Bool Dispatch](https://godbolt.org/z/K1xcqqPad)
+* Enhanced Error Diagnostics:
+  - [Forgetting to dereference](https://godbolt.org/z/TKbvz8fMd)
+
+These examples demonstrate that TInCuP:
+- ✅ Works with all major compilers (GCC, Clang, MSVC)
+- ✅ Produces optimal assembly (check the "Add New → Opt Output" panel)
+- ✅ Provides clear error messages
+
+
+
 
 ## All-Concrete CPO Design Guidance
 
