@@ -21,10 +21,6 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 #include <typeindex>
 #include <utility>
 
-#if __cplusplus < 202002L
-#error "TInCuP requires C++20 or later"
-#endif
-
 namespace tincup {
 
 struct BoolDispatch {

@@ -10,10 +10,6 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 
 #pragma once
 
-#if __cplusplus < 202002L
-#error "TInCuP requires C++20 or later"
-#endif
-
 #include <functional>
 
 #include "bool_dispatch.hpp"
