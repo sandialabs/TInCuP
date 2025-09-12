@@ -10,6 +10,7 @@ Questions? Contact Greg von Winckel (gvonwin@sandia.gov)
 
 #pragma once
 
+#include <concepts>
 #include <string_view>
 #include "cpo_tag.hpp"
 
@@ -30,13 +31,13 @@ constexpr bool operator == ( constant_t<LhsValue>,
   return LhsValue == RhsValue;
 }
 
-template<auto LhsValue, typename Rhs>
+template<auto LhsValue, std::integral Rhs>
 constexpr bool operator == ( constant_t<LhsValue>, 
 		             const Rhs& rhs ) {
   return LhsValue == rhs;
 }
 
-template<typename Lhs, auto RhsValue>
+template<std::integral Lhs, auto RhsValue>
 constexpr bool operator == ( const Lhs& lhs, 
 		             constant_t<RhsValue> ) {
   return lhs == RhsValue;

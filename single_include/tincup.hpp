@@ -82,7 +82,7 @@ template<std::size_t N, std::size_t M>
 constexpr bool operator == ( const StringLiteral<N>& lhs, 
 		             const StringLiteral<M>& rhs ) {
   if constexpr (N != M) return false;
-  for(size_t i = 0; i < N; ++i) {
+  for(std::size_t i = 0; i < N; ++i) {
     if (lhs.value[i] != rhs.value[i]) return false;
   }
   return true;
@@ -92,7 +92,7 @@ template<std::size_t N, std::size_t M>
 constexpr bool operator == ( const StringLiteral<N>& lhs, 
 		             const char (&rhs)[M] ) {
   if constexpr (N != M) return false;
-  for(size_t i = 0; i < N; ++i) {
+  for(std::size_t i = 0; i < N; ++i) {
     if (lhs.value[i] != rhs[i]) return false;
   }
   return true;
@@ -154,13 +154,13 @@ constexpr bool operator == ( constant_t<LhsValue>,
   return LhsValue == RhsValue;
 }
 
-template<auto LhsValue, typename Rhs>
+template<auto LhsValue, std::integral Rhs>
 constexpr bool operator == ( constant_t<LhsValue>, 
 		             const Rhs& rhs ) {
   return LhsValue == rhs;
 }
 
-template<typename Lhs, auto RhsValue>
+template<std::integral Lhs, auto RhsValue>
 constexpr bool operator == ( const Lhs& lhs, 
 		             constant_t<RhsValue> ) {
   return lhs == RhsValue;
