@@ -402,6 +402,38 @@ EOF
     log_success "Header-only verification completed"
 }
 
+# Generator compile smoke test (mirrors cpo-verification workflow)
+run_cpo_verification_compile() {
+    log_section "Generator Compile Smoke Test"
+
+    cd "$PROJECT_ROOT"
+    mkdir -p "$BUILD_DIR/test_generated"
+
+    # Generate a simple CPO header via the generator
+    python3 -m cpo_tools.cpo_generator '{"cpo_name": "test_compile", "args": ["$T&: arg"]}' > "$BUILD_DIR/test_generated/test.hpp"
+
+    # Minimal test TU
+    cat > "$BUILD_DIR/test_generated/test.cpp" << 'EOF'
+#include "tincup/tincup.hpp"
+#include "test.hpp"
+int main() { return 0; }
+EOF
+
+    # Choose a GCC if available, fall back to clang++
+    CXXBIN=""
+    if command -v g++-11 >/dev/null 2>&1; then CXXBIN=g++-11; 
+    elif command -v g++ >/dev/null 2>&1; then CXXBIN=g++; 
+    elif command -v clang++ >/dev/null 2>&1; then CXXBIN=clang++; 
+    else
+        log_error "No suitable C++ compiler found for generator smoke test"
+        exit 1
+    fi
+
+    # Compile with YOUR_NAMESPACE cleared so the generated trait specialization binds
+    (cd "$BUILD_DIR/test_generated" && "$CXXBIN" -std=c++20 -DYOUR_NAMESPACE= -I"$PROJECT_ROOT/include" -c test.cpp)
+    log_success "Generator compile smoke test passed with $CXXBIN"
+}
+
 # Summary function
 print_summary() {
     log_section "Test Summary"
@@ -435,6 +467,7 @@ main() {
     run_editor_integration_tests
     run_example_tests
     run_header_verification
+    run_cpo_verification_compile
     print_summary
 }
 
