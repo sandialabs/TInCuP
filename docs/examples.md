@@ -54,64 +54,63 @@ using generic_cpo_traits = tincup::cpo_traits<generic_cpo_ftor, T1&, T2&>;
 
 
 // External generator-provided argument trait specialization for generic_cpo
-// Forward declare primary template to allow specialization even if not included yet
-namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
-
+// NOTE: Replace YOUR_NAMESPACE with the actual namespace containing your CPO
+// (e.g., rvf::generic_cpo_ftor, my_lib::generic_cpo_ftor, etc.)
 namespace tincup {
   template<typename T1, typename T2>
-  struct cpo_arg_traits<generic_cpo_ftor, T1&, T2&> {
+  struct cpo_arg_traits<YOUR_NAMESPACE::generic_cpo_ftor, T1&, T2&> {
     static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = 2;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
-      tincup::arity_type m = tincup::arity_type{0};
-      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
+    static constexpr arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      arity_type m = arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr tincup::arity_type values_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type values_mask = []{
+      arity_type m = arity_type{0};
       // Fixed positions
       // Pack positions
       return m;
     }();
 
     // Pointers mask
-    static constexpr tincup::arity_type pointers_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type pointers_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr tincup::arity_type lvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
- m |= (tincup::arity_type{1} << 0);  m |= (tincup::arity_type{1} << 1);       return m;
+    static constexpr arity_type lvalue_refs_mask = []{
+      arity_type m = arity_type{0};
+m |= (arity_type{1} << 0);m |= (arity_type{1} << 1);      return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr tincup::arity_type rvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type rvalue_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Forwarding refs mask
-    static constexpr tincup::arity_type forwarding_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type forwarding_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type lvalue_const_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr tincup::arity_type const_qualified_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type const_qualified_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
   };
@@ -151,41 +150,40 @@ using concrete_cpo_traits = tincup::cpo_traits<concrete_cpo_ftor, int, double&>;
 // Usage: tincup::is_invocable_v<concrete_cpo_ftor, int, double&>
 
 // External generator-provided argument trait specialization for concrete_cpo (concrete)
-// Forward declare primary template to allow specialization even if not included yet
-namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
-
+// NOTE: Replace YOUR_NAMESPACE with the actual namespace containing your CPO
+// (e.g., rvf::concrete_cpo_ftor, my_lib::concrete_cpo_ftor, etc.)
 namespace tincup {
   template<typename _A0, typename _A1>
-  struct cpo_arg_traits<concrete_cpo_ftor,_A0, _A1> {
+  struct cpo_arg_traits<YOUR_NAMESPACE::concrete_cpo_ftor,int, double&> {
     static constexpr bool available = true;
     static constexpr std::size_t fixed_arity = 2;
-    static constexpr tincup::arity_type values_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
-        m |= (tincup::arity_type{1} << 0);
+    static constexpr arity_type values_mask = []{
+      arity_type m = arity_type{0};
+      m |= (arity_type{1} << 0);
       return m;
     }();
-    static constexpr tincup::arity_type pointers_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type pointers_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
-    static constexpr tincup::arity_type lvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
- m |= (tincup::arity_type{1} << 1);       return m;
+    static constexpr arity_type lvalue_refs_mask = []{
+      arity_type m = arity_type{0};
+m |= (arity_type{1} << 1);      return m;
     }();
-    static constexpr tincup::arity_type rvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type rvalue_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
-    static constexpr tincup::arity_type forwarding_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type forwarding_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
-    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type lvalue_const_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
-    static constexpr tincup::arity_type const_qualified_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type const_qualified_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
   };
@@ -235,64 +233,63 @@ using forwarding_ref_cpo_traits = tincup::cpo_traits<forwarding_ref_cpo_ftor, T>
 
 
 // External generator-provided argument trait specialization for forwarding_ref_cpo
-// Forward declare primary template to allow specialization even if not included yet
-namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
-
+// NOTE: Replace YOUR_NAMESPACE with the actual namespace containing your CPO
+// (e.g., rvf::forwarding_ref_cpo_ftor, my_lib::forwarding_ref_cpo_ftor, etc.)
 namespace tincup {
   template<typename T>
-  struct cpo_arg_traits<forwarding_ref_cpo_ftor, T> {
+  struct cpo_arg_traits<YOUR_NAMESPACE::forwarding_ref_cpo_ftor, T> {
     static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = 1;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
-      tincup::arity_type m = tincup::arity_type{0};
-      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
+    static constexpr arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      arity_type m = arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr tincup::arity_type values_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type values_mask = []{
+      arity_type m = arity_type{0};
       // Fixed positions
       // Pack positions
       return m;
     }();
 
     // Pointers mask
-    static constexpr tincup::arity_type pointers_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type pointers_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr tincup::arity_type lvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type lvalue_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr tincup::arity_type rvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
- m |= (tincup::arity_type{1} << 0);       return m;
+    static constexpr arity_type rvalue_refs_mask = []{
+      arity_type m = arity_type{0};
+m |= (arity_type{1} << 0);      return m;
     }();
 
     // Forwarding refs mask
-    static constexpr tincup::arity_type forwarding_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
- m |= (tincup::arity_type{1} << 0);       return m;
+    static constexpr arity_type forwarding_refs_mask = []{
+      arity_type m = arity_type{0};
+m |= (arity_type{1} << 0);      return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type lvalue_const_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr tincup::arity_type const_qualified_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type const_qualified_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
   };
@@ -342,26 +339,25 @@ using variadic_cpo_traits = tincup::cpo_traits<variadic_cpo_ftor, T&...>;
 
 
 // External generator-provided argument trait specialization for variadic_cpo
-// Forward declare primary template to allow specialization even if not included yet
-namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
-
+// NOTE: Replace YOUR_NAMESPACE with the actual namespace containing your CPO
+// (e.g., rvf::variadic_cpo_ftor, my_lib::variadic_cpo_ftor, etc.)
 namespace tincup {
   template<typename... T>
-  struct cpo_arg_traits<variadic_cpo_ftor, T&...> {
+  struct cpo_arg_traits<YOUR_NAMESPACE::variadic_cpo_ftor, T&...> {
     static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = 0;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
-      tincup::arity_type m = tincup::arity_type{0};
-      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
+    static constexpr arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      arity_type m = arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr tincup::arity_type values_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type values_mask = []{
+      arity_type m = arity_type{0};
       // Fixed positions
       // Pack positions
         // For packs, category is determined by the declared form of the pack
@@ -369,39 +365,39 @@ namespace tincup {
     }();
 
     // Pointers mask
-    static constexpr tincup::arity_type pointers_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type pointers_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr tincup::arity_type lvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
-        m |= repeat_mask(fixed_arity, sizeof...(T));
+    static constexpr arity_type lvalue_refs_mask = []{
+      arity_type m = arity_type{0};
+      m |= repeat_mask(fixed_arity, sizeof...(T));
       return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr tincup::arity_type rvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type rvalue_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Forwarding refs mask
-    static constexpr tincup::arity_type forwarding_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type forwarding_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type lvalue_const_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr tincup::arity_type const_qualified_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type const_qualified_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
   };
@@ -477,64 +473,63 @@ using conditional_process_traits = tincup::cpo_traits<conditional_process_ftor, 
 
 
 // External generator-provided argument trait specialization for conditional_process
-// Forward declare primary template to allow specialization even if not included yet
-namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
-
+// NOTE: Replace YOUR_NAMESPACE with the actual namespace containing your CPO
+// (e.g., rvf::conditional_process_ftor, my_lib::conditional_process_ftor, etc.)
 namespace tincup {
   template<typename T>
-  struct cpo_arg_traits<conditional_process_ftor, T&> {
+  struct cpo_arg_traits<YOUR_NAMESPACE::conditional_process_ftor, T&> {
     static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = 1;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
-      tincup::arity_type m = tincup::arity_type{0};
-      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
+    static constexpr arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      arity_type m = arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr tincup::arity_type values_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type values_mask = []{
+      arity_type m = arity_type{0};
       // Fixed positions
       // Pack positions
       return m;
     }();
 
     // Pointers mask
-    static constexpr tincup::arity_type pointers_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type pointers_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr tincup::arity_type lvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
- m |= (tincup::arity_type{1} << 0);       return m;
+    static constexpr arity_type lvalue_refs_mask = []{
+      arity_type m = arity_type{0};
+m |= (arity_type{1} << 0);      return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr tincup::arity_type rvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type rvalue_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Forwarding refs mask
-    static constexpr tincup::arity_type forwarding_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type forwarding_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type lvalue_const_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr tincup::arity_type const_qualified_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type const_qualified_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
   };
@@ -642,65 +637,64 @@ using compression_method_traits = tincup::cpo_traits<compression_method_ftor, co
 
 
 // External generator-provided argument trait specialization for compression_method
-// Forward declare primary template to allow specialization even if not included yet
-namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
-
+// NOTE: Replace YOUR_NAMESPACE with the actual namespace containing your CPO
+// (e.g., rvf::compression_method_ftor, my_lib::compression_method_ftor, etc.)
 namespace tincup {
   template<typename T>
-  struct cpo_arg_traits<compression_method_ftor, const T&> {
+  struct cpo_arg_traits<YOUR_NAMESPACE::compression_method_ftor, const T&> {
     static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = 1;
 
     // Helpers to build repeated masks for parameter packs
-    static constexpr tincup::arity_type repeat_mask(std::size_t offset, std::size_t count) {
-      tincup::arity_type m = tincup::arity_type{0};
-      for (std::size_t i = 0; i < count; ++i) m |= (tincup::arity_type{1} << (offset + i));
+    static constexpr arity_type repeat_mask(std::size_t offset, std::size_t count) {
+      arity_type m = arity_type{0};
+      for (std::size_t i = 0; i < count; ++i) m |= (arity_type{1} << (offset + i));
       return m;
     }
 
     // Values mask
-    static constexpr tincup::arity_type values_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type values_mask = []{
+      arity_type m = arity_type{0};
       // Fixed positions
       // Pack positions
       return m;
     }();
 
     // Pointers mask
-    static constexpr tincup::arity_type pointers_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type pointers_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Lvalue refs mask
-    static constexpr tincup::arity_type lvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
- m |= (tincup::arity_type{1} << 0);       return m;
+    static constexpr arity_type lvalue_refs_mask = []{
+      arity_type m = arity_type{0};
+m |= (arity_type{1} << 0);      return m;
     }();
 
     // Rvalue refs mask (non-forwarding)
-    static constexpr tincup::arity_type rvalue_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type rvalue_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Forwarding refs mask
-    static constexpr tincup::arity_type forwarding_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
+    static constexpr arity_type forwarding_refs_mask = []{
+      arity_type m = arity_type{0};
       return m;
     }();
 
     // Lvalue const refs mask
-    static constexpr tincup::arity_type lvalue_const_refs_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
- m |= (tincup::arity_type{1} << 0);       return m;
+    static constexpr arity_type lvalue_const_refs_mask = []{
+      arity_type m = arity_type{0};
+m |= (arity_type{1} << 0);      return m;
     }();
 
     // Const-qualified mask (applies to values, refs, or pointers where declared const)
-    static constexpr tincup::arity_type const_qualified_mask = []{
-      tincup::arity_type m = tincup::arity_type{0};
- m |= (tincup::arity_type{1} << 0);       return m;
+    static constexpr arity_type const_qualified_mask = []{
+      arity_type m = arity_type{0};
+m |= (arity_type{1} << 0);      return m;
     }();
   };
 }

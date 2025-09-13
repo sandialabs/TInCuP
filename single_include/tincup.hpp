@@ -230,7 +230,7 @@ using deref_t = decltype(deref_if_needed(std::declval<T>()));
 
 template<typename T>
 auto const_cast_if_needed(T&& x) noexcept -> std::remove_const_t<std::remove_reference_t<T>>&
-requires std::is_lvalue_reference_v<T> && std::is_const_v<std::remove_reference_t<T>> {
+requires (std::is_lvalue_reference_v<T> && std::is_const_v<std::remove_reference_t<T>>) {
   return const_cast<std::remove_const_t<std::remove_reference_t<T>>&>(x);
 }
 
@@ -242,6 +242,21 @@ requires (!std::is_lvalue_reference_v<T> || !std::is_const_v<std::remove_referen
 
 template<typename T>
 using const_cast_t = decltype(const_cast_if_needed(std::declval<T>()));
+
+template<typename T>
+auto add_const_if_needed(T&& x) noexcept -> const std::remove_reference_t<T>&
+requires (std::is_lvalue_reference_v<T> && !std::is_const_v<std::remove_reference_t<T>>) {
+  return const_cast<const std::remove_reference_t<T>&>(x);
+}
+
+template<typename T>
+auto add_const_if_needed(T&& x) noexcept -> T&&
+requires (!std::is_lvalue_reference_v<T> || std::is_const_v<std::remove_reference_t<T>>) {
+  return std::forward<T>(x);
+}
+
+template<typename T>
+using add_const_t = decltype(add_const_if_needed(std::declval<T>()));
 
 } // namespace tincup
 
@@ -841,37 +856,42 @@ protected:
     const auto& derived_cpo = static_cast<const Derived&>(*this);
 
 #ifndef TINCUP_DISABLE_POINTER_DIAGNOSTICS
-  constexpr bool deref_works = requires { 
+  [[maybe_unused]] constexpr bool deref_works = requires { 
     tag_invoke(derived_cpo, 
                deref_if_needed(std::forward<Args>(args))...); 
   };
 #else
-  constexpr bool deref_works = false;
+  [[maybe_unused]] constexpr bool deref_works = false;
 #endif
 
 #ifndef TINCUP_DISABLE_CONST_DIAGNOSTICS
-  constexpr bool unconst_works = requires { 
+  [[maybe_unused]] constexpr bool unconst_works = requires { 
     tag_invoke(derived_cpo, const_cast_if_needed(std::forward<Args>(args))...); 
   };
 
-  constexpr bool both_works = requires { 
+  [[maybe_unused]] constexpr bool const_works = requires {
+    tag_invoke(derived_cpo, add_const_if_needed(std::forward<Args>(args))...);
+  };
+
+  [[maybe_unused]] constexpr bool both_works = requires { 
     tag_invoke(derived_cpo, const_cast_if_needed(deref_if_needed(std::forward<Args>(args)))...); 
   };
 #else
-  constexpr bool unconst_works = false;
-  constexpr bool both_works = false;
+  [[maybe_unused]] constexpr bool unconst_works = false;
+  [[maybe_unused]] constexpr bool const_works = false;
+  [[maybe_unused]] constexpr bool both_works = false;
 #endif
 
 #ifndef TINCUP_DISABLE_ORDER_DIAGNOSTICS
-  constexpr bool binary_swap_works = detail::check_binary_swap<Derived, Args...>();
+  [[maybe_unused]] constexpr bool binary_swap_works = detail::check_binary_swap<Derived, Args...>();
 #else
-  constexpr bool binary_swap_works = false;
+  [[maybe_unused]] constexpr bool binary_swap_works = false;
 #endif
 
 #ifndef TINCUP_DISABLE_ARITY_DIAGNOSTICS
-  constexpr bool arity_mismatch = detail::check_common_arities<Derived, Args...>();
+  [[maybe_unused]] constexpr bool arity_mismatch = detail::check_common_arities<Derived, Args...>();
 #else
-  constexpr bool arity_mismatch = false;
+  [[maybe_unused]] constexpr bool arity_mismatch = false;
 #endif
 
   if constexpr (deref_works) {

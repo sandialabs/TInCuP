@@ -233,37 +233,42 @@ protected:
     const auto& derived_cpo = static_cast<const Derived&>(*this);
 
 #ifndef TINCUP_DISABLE_POINTER_DIAGNOSTICS
-  constexpr bool deref_works = requires { 
+  [[maybe_unused]] constexpr bool deref_works = requires { 
     tag_invoke(derived_cpo, 
                deref_if_needed(std::forward<Args>(args))...); 
   };
 #else
-  constexpr bool deref_works = false;
+  [[maybe_unused]] constexpr bool deref_works = false;
 #endif
 
 #ifndef TINCUP_DISABLE_CONST_DIAGNOSTICS
-  constexpr bool unconst_works = requires { 
+  [[maybe_unused]] constexpr bool unconst_works = requires { 
     tag_invoke(derived_cpo, const_cast_if_needed(std::forward<Args>(args))...); 
   };
 
-  constexpr bool both_works = requires { 
+  [[maybe_unused]] constexpr bool const_works = requires {
+    tag_invoke(derived_cpo, add_const_if_needed(std::forward<Args>(args))...);
+  };
+
+  [[maybe_unused]] constexpr bool both_works = requires { 
     tag_invoke(derived_cpo, const_cast_if_needed(deref_if_needed(std::forward<Args>(args)))...); 
   };
 #else
-  constexpr bool unconst_works = false;
-  constexpr bool both_works = false;
+  [[maybe_unused]] constexpr bool unconst_works = false;
+  [[maybe_unused]] constexpr bool const_works = false;
+  [[maybe_unused]] constexpr bool both_works = false;
 #endif
 
 #ifndef TINCUP_DISABLE_ORDER_DIAGNOSTICS
-  constexpr bool binary_swap_works = detail::check_binary_swap<Derived, Args...>();
+  [[maybe_unused]] constexpr bool binary_swap_works = detail::check_binary_swap<Derived, Args...>();
 #else
-  constexpr bool binary_swap_works = false;
+  [[maybe_unused]] constexpr bool binary_swap_works = false;
 #endif
 
 #ifndef TINCUP_DISABLE_ARITY_DIAGNOSTICS
-  constexpr bool arity_mismatch = detail::check_common_arities<Derived, Args...>();
+  [[maybe_unused]] constexpr bool arity_mismatch = detail::check_common_arities<Derived, Args...>();
 #else
-  constexpr bool arity_mismatch = false;
+  [[maybe_unused]] constexpr bool arity_mismatch = false;
 #endif
 
   if constexpr (deref_works) {

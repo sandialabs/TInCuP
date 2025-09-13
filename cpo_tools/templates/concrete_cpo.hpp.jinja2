@@ -16,18 +16,17 @@ inline constexpr struct {{ cpo_name }}_ftor final : tincup::cpo_base<{{ cpo_name
 {{ cpo_type_aliases(cpo_name, "", concept_types, semantic_info, canonical_concept_args) }}
 
 // External generator-provided argument trait specialization for {{ cpo_name }} (concrete)
-// Forward declare primary template to allow specialization even if not included yet
-namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
-
+// NOTE: Replace YOUR_NAMESPACE with the actual namespace containing your CPO
+// (e.g., rvf::{{ cpo_name }}_ftor, my_lib::{{ cpo_name }}_ftor, etc.)
 namespace tincup {
   template<
     {%- for a in args -%}
     typename _A{{ loop.index0 }}{{ ', ' if not loop.last else '' }}
     {%- endfor -%}
   >
-  struct cpo_arg_traits<{{ cpo_name }}_ftor, 
+  struct cpo_arg_traits<YOUR_NAMESPACE::{{ cpo_name }}_ftor, 
     {%- for a in args -%}
-    _A{{ loop.index0 }}{{ ', ' if not loop.last else '' }}
+    {{ a.full }}{{ ', ' if not loop.last else '' }}
     {%- endfor -%}
   > {
     static constexpr bool available = true;

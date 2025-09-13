@@ -27,12 +27,11 @@ inline constexpr struct {{ cpo_name }}_ftor final : tincup::cpo_base<{{ cpo_name
 {{ cpo_type_aliases(cpo_name, arg_types, concept_types, semantic_info, canonical_concept_args) }}
 
 // External generator-provided argument trait specialization for {{ cpo_name }}
-// Forward declare primary template to allow specialization even if not included yet
-namespace tincup { template<typename Cp, typename...Args> struct cpo_arg_traits; }
-
+// NOTE: Replace YOUR_NAMESPACE with the actual namespace containing your CPO
+// (e.g., rvf::{{ cpo_name }}_ftor, my_lib::{{ cpo_name }}_ftor, etc.)
 namespace tincup {
   template<{{ arg_types }}>
-  struct cpo_arg_traits<{{ cpo_name }}_ftor, {{ concept_types }}> {
+  struct cpo_arg_traits<YOUR_NAMESPACE::{{ cpo_name }}_ftor, {{ concept_types }}> {
     static constexpr bool available = true;
     // Fixed (non-pack) argument count
     static constexpr std::size_t fixed_arity = {{ args | selectattr('is_variadic', 'equalto', False) | list | length }};
