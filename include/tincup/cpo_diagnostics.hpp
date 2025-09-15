@@ -436,19 +436,4 @@ protected:
   } // enhanced_fail 
 }; // class cpo_diagnostics 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 } // namespace tincup

@@ -20,7 +20,7 @@ template<typename Derived>
 struct cpo_base : public cpo_introspection<Derived>,
                   public cpo_diagnostics<Derived> {
   template<typename... Args>
-    constexpr void operator()(Args&&... args) const {
+  constexpr void operator()(Args&&... args) const {
     this->enhanced_fail(std::forward<Args>(args)...);
   }
 }; // struct cpo_base  

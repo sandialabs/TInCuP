@@ -50,7 +50,7 @@ struct BoolDispatch {
     static_assert(std::is_invocable_v<decltype(f),std::bool_constant<true>>,
                   "Error: Function must be callable with an argument of type std::bool_constant<true>");
     static_assert(std::is_invocable_v<decltype(f),std::bool_constant<false>>,
-                  "Error: Function must be callable with an argument of type std::bool_constant<true>");
+                  "Error: Function must be callable with an argument of type std::bool_constant<false>");
     if (value) {
       return std::forward<F>(f)(std::bool_constant<true>{});
     } else {
@@ -1102,7 +1102,7 @@ template<typename Derived>
 struct cpo_base : public cpo_introspection<Derived>,
                   public cpo_diagnostics<Derived> {
   template<typename... Args>
-    constexpr void operator()(Args&&... args) const {
+  constexpr void operator()(Args&&... args) const {
     this->enhanced_fail(std::forward<Args>(args)...);
   }
 }; // struct cpo_base  
