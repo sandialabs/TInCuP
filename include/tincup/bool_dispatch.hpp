@@ -42,7 +42,7 @@ struct BoolDispatch {
     static_assert(std::is_invocable_v<decltype(f),std::bool_constant<true>>,
                   "Error: Function must be callable with an argument of type std::bool_constant<true>");
     static_assert(std::is_invocable_v<decltype(f),std::bool_constant<false>>,
-                  "Error: Function must be callable with an argument of type std::bool_constant<true>");
+                  "Error: Function must be callable with an argument of type std::bool_constant<false>");
     if (value) {
       return std::forward<F>(f)(std::bool_constant<true>{});
     } else {
