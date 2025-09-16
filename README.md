@@ -20,6 +20,8 @@
 
 TInCuP helps you add clean, extensible “hooks” to your C++ library. Describe what you want in a simple spec, generate correct code, and get readable compiler messages when something goes wrong.
 
+[My CppCon 2025 Slides](docs/CppCon2025.pdf)
+
 ## Why Should I Care About Customization Points (and TInCuP?)
 
 Have you ever been in a situation like the following?
