@@ -34,8 +34,16 @@ build-backend = "setuptools.build_meta"
 
 [project.scripts]
 cpo-generator = "cpo_tools.cpo_generator:main"
+cpo-bidirectional = "cpo_tools.bijective.cli:main"
 
 [project.optional-dependencies]
+# For reverse transformation (CPO → custom)
+reverse = ["libclang>=16.0"]
+
+# Full bijective transformation support
+bijective = ["TInCuP[reverse]"]
+
+# Development dependencies
 dev = [
     "pytest>=7.0",
     "black>=22.0",
