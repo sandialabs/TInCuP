@@ -68,6 +68,8 @@ make -f build_systems/make/Makefile verify-cpos
 ```cpp
 #include <tincup/tincup.hpp>
 
+using namespace tincup;
+
 // Define your CPO
 inline constexpr struct my_cpo_ftor final : cpo_base<my_cpo_ftor> {
   TINCUP_CPO_TAG("my_cpo")
@@ -82,7 +84,7 @@ inline constexpr struct my_cpo_ftor final : cpo_base<my_cpo_ftor> {
   template<typename T>
     requires (!tag_invocable_c<my_cpo_ftor, T&>)
     constexpr void operator()(T& obj) const {
-      this->fail(obj);
+      this->enhanced_fail(obj);
     }
 } my_cpo;
 

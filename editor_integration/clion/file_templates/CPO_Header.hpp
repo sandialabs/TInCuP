@@ -32,7 +32,7 @@ inline constexpr struct ${CPO_NAME}_ftor final : tincup::cpo_base<${CPO_NAME}_ft
     template<${TEMPLATE_PARAMS}>
         requires (!tag_invocable_c<${CPO_NAME}_ftor, ${REQUIRES_PARAMS}>)
         constexpr void operator()(${FUNCTION_PARAMS}) const {
-            this->fail(${FORWARD_ARGS});
+            this->enhanced_fail(${FORWARD_ARGS});
         }
 } ${CPO_NAME};
 

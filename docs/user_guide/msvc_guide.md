@@ -210,7 +210,7 @@ inline constexpr struct add_to_ftor final : cpo_base<add_to_ftor> {
     template<typename Container, typename Value>
         requires (!tag_invocable_c<add_to_ftor, Container&, const Value&>)
         constexpr void operator()(Container& container, const Value& value) const {
-            this->fail(container, value);
+            this->enhanced_fail(container, value);
         }
 } add_to;
 
